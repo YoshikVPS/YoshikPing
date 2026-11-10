@@ -11,11 +11,14 @@ permissions:
 jobs:
   run-ping-test:
     name: "🔍 اجرای پایش و اسکن شبکه"
-    if: startsWith(github.event.comment.body, '/ping')
+    # اجرای اکشنز مشروط به: شروع با /ping و فقط ارسال توسط کاربر مدیر تعیین شده در Secret
+    if: |
+      startsWith(github.event.comment.body, '/ping') &&
+      github.event.comment.user.login == secrets.ADMIN_USERNAME
     runs-on: ubuntu-latest
 
     steps:
-      - name: "💬 ارسال پاسخ اولیه به کاربر"
+      - name: "💬 ارسال پاسخ اولیه به مدیر"
         uses: actions/github-script@v7
         with:
           script: |
@@ -23,7 +26,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: "👋 متوجه شدم عزیز دل! من دارم تست‌ها رو انجام میدم، لطفاً صبوری کنید... ⏳🔬"
+              body: "👋 دستور شما دریافت شد مدیر گرامی؛ آزمون شبکه آغاز گردید، لطفاً صبور باشید... ⏳🔬"
             });
 
       - name: "📥 دریافت کدهای مخزن"
@@ -45,12 +48,12 @@ jobs:
 
       - name: "💾 ثبت و آرشیو لاگ در مخزن"
         run: |
-          git config --global user.name "Yoshik Bot"
-          git config --global user.email "yoshik-bot@noreply.github.com"
+          git config --global user.name "Yoshik Ping Engine"
+          git config --global user.email "ping-engine@users.noreply.github.com"
           git pull --rebase origin main || true
           mkdir -p ping
           git add ping/
-          git commit -m "📝 ثبت لاگ تست شبکه: ${LOG_FILENAME:-update} [skip ci]" || echo "تغییری وجود ندارد"
+          git commit -m "📝 لاگ ارزیابی خودکار شبکه: ${LOG_FILENAME:-update} [skip ci]" || echo "تغییری وجود ندارد"
           git push
 
       - name: "📢 ارسال نتیجه نهایی در ایشو"
@@ -68,8 +71,3 @@ jobs:
                 body: body
               });
             }
-
-      - name: "⏳ مکث ۵ دقیقه‌ای پایانی"
-        run: |
-          echo "🕒 سیستم به مدت ۵ دقیقه جهت بررسی وضعیت فعال می‌ماند..."
-          sleep 300
