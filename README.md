@@ -10,6 +10,11 @@
 
 <br/>
 
+[![1-Click Fork](https://img.shields.io/badge/⚡️_1--Click_Deploy-Fork_Repository-orange?style=for-the-badge&logo=git&logoColor=white)](https://github.com/YoshikVPS/ping/fork)
+[![Open Issue](https://img.shields.io/badge/💬_ChatOps-Run_Diagnostics-blueviolet?style=for-the-badge&logo=github)](https://github.com/YoshikVPS/ping/issues/new)
+
+<br/>
+
 **[🇬🇧 Read in English](#-english-documentation)** &nbsp; | &nbsp; **[🇮🇷 مطالعه راهنمای فارسی](#-مستندات-جامع-فارسی)**
 
 </div>
@@ -68,7 +73,13 @@ Yoshik Ping avoids arbitrary port knocking; every probe runs low-overhead native
 
 ### 👥 How to Deploy on Your Account (Fork Guide)
 
-1. Click **Fork** at the top right of this repository.
+<div align="center">
+
+[![Fork Immediately](https://img.shields.io/badge/Clone%20Now-Click%20Here%20to%20Fork-2ea44f?style=for-the-badge&logo=github)](https://github.com/YoshikVPS/ping/fork)
+
+</div>
+
+1. Click the button above to fork the repository instantly.
 2. In your forked repository, navigate to **Settings ➔ Actions ➔ General**.
 3. Under **Workflow permissions**, select **Read and write permissions** and click **Save**.
 4. Go to **Settings ➔ Secrets and variables ➔ Actions** and create a **New repository secret**:
@@ -129,26 +140,50 @@ Yoshik Ping avoids arbitrary port knocking; every probe runs low-overhead native
 
 ---
 
-### ⚙️ آموزش راه‌اندازی و پورت کردن روی مخزن شخصی
-
-اگر می‌خواهید این سیستم را بدون دستکاری کدها روی اکانت خود داشته باشید و از سهمیه رانرهای رایگان خودتان استفاده کنید:
-
-1. **فورک کردن:** در بالای همین صفحه روی دکمه **Fork** بزنید تا پروژه به حساب شما منتقل شود.
-2. **تنظیم دسترسی Write در اکشنز:**
-   * در مخزن خود به مسیر **Settings ➔ Actions ➔ General** بروید.
-   * در پایین صفحه بخش **Workflow permissions** گزینه **Read and write permissions** را انتخاب و **Save** کنید.
-3. **تعریف نام مدیر در Secret:**
-   * به مسیر **Settings ➔ Secrets and variables ➔ Actions** بروید.
-   * روی **New repository secret** بزنید:
-     - **Name:** `ADMIN_USERNAME`
-     - **Secret:** نام‌کاربری گیت‌هاب خودتان (مثلاً: `YoshikVPS`)
-4. **شروع پایش:** وارد تب **Issues** شوید و تست را شروع کنید!
-
----
+### ⚙️ راه‌اندازی با یک کلیک (پورْت سریع روی اکانت شما)
 
 <div align="center">
 
-Built with precision by [YoshikVPS](https://github.com/YoshikVPS)  
-**Yoshik VPS Network Lab**
+[![Fork Yoshik Ping](https://img.shields.io/badge/برای_پورت_کردن_پروژه_کلیک_کنید-Fork_Now-238636?style=for-the-badge&logo=github&logoColor=white)](https://github.com/YoshikVPS/ping/fork)
+
+</div>
+
+برای اینکه کل سیستم روی مخزن شخصی خودتان کپی و فعال شود:
+
+1. **انتقال به اکانت شما:** روی دکمه سبز رنگ بالا کلیک کنید تا مخزن مستقیماً برای شما فورک شود.
+2. **فعال‌سازی دسترسی رایت:** به مسیر `Settings` ➔ `Actions` ➔ `General` رفته و در بخش *Workflow permissions* گزینه **Read and write permissions** را انتخاب کنید.
+3. **تنظیم هویت مدیر مخزن:**
+   - به مسیر `Settings` ➔ `Secrets and variables` ➔ `Actions` بروید.
+   - یک سکرت جدید با مشخصات زیر بسازید:
+   ```yaml
+   Name: ADMIN_USERNAME
+   Secret: نام‌کاربری گیت‌هاب شما (مثلاً YoshikVPS)
+   ```
+4. **شروع پایش:** وارد تب **Issues** شوید، دستور پینگ را کامنت کنید و نتیجه را ببینید!
+
+---
+
+<br/>
+
+<div align="center">
+
+```
+================================================================================
+           📡 YOSHIK VPS NETWORK ENGINEERING & CLOUD TELEMETRY LAB
+================================================================================
+```
+
+| 👨‍💻 System Architect | 🌐 Organization | 🛡 Core License | ⚡️ Engine Status |
+| :---: | :---: | :---: | :---: |
+| [**YoshikVPS**](https://github.com/YoshikVPS) | **Yoshik VPS Network Lab** | **MIT Open Source** | **100% Operational** |
+
+<br/>
+
+[![Follow YoshikVPS](https://img.shields.io/github/followers/YoshikVPS?label=Follow%20Author&style=social)](https://github.com/YoshikVPS)
+[![Star this Repo](https://img.shields.io/github/stars/YoshikVPS/ping?label=Star%20Repository&style=social)](https://github.com/YoshikVPS/ping)
+
+<br/>
+
+<sub>Engineered with precision • Serverless GitHub Actions Core • Tehran Time Synced</sub>
 
 </div>
