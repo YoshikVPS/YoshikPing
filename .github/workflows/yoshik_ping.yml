@@ -1,4 +1,4 @@
-name: "🚀 موتور پردازش یوشیک پینگ (v1.0)"
+name: "🚀 سامانه مدیریت و پایش یوشیک پینگ (v1.0)"
 
 on:
   issue_comment:
@@ -9,23 +9,24 @@ permissions:
   issues: write
 
 jobs:
+  # ========================================================
+  # بخش ۱: تست شبکه با دستور /ping
+  # ========================================================
   run-ping-test:
     name: "🔍 اجرای پایش و اسکن شبکه"
-    # شرط: فقط روی کامنت‌های ایشو و فقط کامنت‌هایی که با /ping شروع می‌شوند
     if: github.event.issue != null && startsWith(github.event.comment.body, '/ping')
     runs-on: ubuntu-latest
 
     steps:
-      - name: "🔒 بررسی دسترسی مدیر"
+      - name: "🔒 بررسی سطح دسترسی مدیر"
         env:
           ADMIN_USER: ${{ secrets.ADMIN_USERNAME }}
           COMMENT_USER: ${{ github.event.comment.user.login }}
         run: |
           if [ -n "$ADMIN_USER" ] && [ "$COMMENT_USER" != "$ADMIN_USER" ]; then
-            echo "❌ کاربر $COMMENT_USER مجاز به اجرای این دستور نیست."
+            echo "❌ خطا: کاربر $COMMENT_USER مجاز به اجرای این دستور نیست."
             exit 1
           fi
-          echo "✅ کاربر تایید شد: $COMMENT_USER"
 
       - name: "💬 ارسال پاسخ اولیه به مدیر"
         uses: actions/github-script@v7
@@ -41,28 +42,27 @@ jobs:
       - name: "📥 دریافت کدهای مخزن"
         uses: actions/checkout@v4
 
-      - name: "🐍 پیکربندی محیط پایتون"
+      - name: "🐍 پیکربندی پایتون"
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
       - name: "📦 نصب پکیج‌های پیش‌نیاز"
         run: |
-          python -m pip install --upgrade pip
           pip install jdatetime
 
       - name: "⚙️ پردازش دستور و پایش شبکه"
         run: |
           python yoshik_ping.py "${{ github.event.comment.body }}"
 
-      - name: "💾 ثبت و آرشیو لاگ در مخزن"
+      - name: "💾 ذخیره لاگ در مخزن"
         run: |
           git config --global user.name "Yoshik Ping Engine"
           git config --global user.email "ping-engine@users.noreply.github.com"
           git pull --rebase origin main || true
           mkdir -p ping
           git add ping/
-          git commit -m "📝 لاگ ارزیابی خودکار شبکه: ${LOG_FILENAME:-update} [skip ci]" || echo "تغییری وجود ندارد"
+          git commit -m "📝 لاگ ارزیابی خودکار شبکه: ${LOG_FILENAME:-update} [skip ci]" || echo "بدون تغییر"
           git push
 
       - name: "📢 ارسال نتیجه نهایی در ایشو"
@@ -80,3 +80,101 @@ jobs:
                 body: body
               });
             }
+
+  # ========================================================
+  # بخش ۲: دستور پاکسازی آرشیو به درخواست مدیر
+  # ========================================================
+  cleanup-storage:
+    name: "🧹 پاکسازی آرشیو پوشه لاگ‌ها"
+    if: github.event.issue != null && trim(github.event.comment.body) == 'پاکسازی'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "🔒 بررسی سطح دسترسی مدیر"
+        env:
+          ADMIN_USER: ${{ secrets.ADMIN_USERNAME }}
+          COMMENT_USER: ${{ github.event.comment.user.login }}
+        run: |
+          if [ -n "$ADMIN_USER" ] && [ "$COMMENT_USER" != "$ADMIN_USER" ]; then
+            echo "❌ خطا: کاربر $COMMENT_USER مجاز به پاکسازی نیست."
+            exit 1
+          fi
+
+      - name: "📥 دریافت سورس مخزن"
+        uses: actions/checkout@v4
+
+      - name: "💬 پرسش تاییدیه از مدیر و انتظار ۱ دقیقه‌ای برای پاسخ"
+        id: prompt_step
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const promptComment = await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: "⚠️ **هشدار مدیر گرامی!**\nآیا مطمئن هستید که می‌خواهید تمام آرشیو پوشه `ping/` به‌طور کامل حذف شود؟\n\n⏱ لطفاً ظرف حداکثر **۱ دقیقه** با ارسال کلمه **«بله»** یا **«خیر»** پاسخ دهید."
+            });
+
+            const startTime = Date.now();
+            const timeoutMs = 60 * 1000; // مهلت دقیق ۱ دقیقه
+            let userDecision = "TIMEOUT";
+
+            while (Date.now() - startTime < timeoutMs) {
+              await new Promise(r => setTimeout(r, 4000));
+              
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                since: new Date(startTime).toISOString()
+              });
+
+              for (const c of comments.data) {
+                if (c.user.login === context.actor && c.id !== promptComment.data.id) {
+                  const txt = c.body.trim();
+                  if (txt === "بله") {
+                    userDecision = "YES";
+                    break;
+                  } else if (txt === "خیر") {
+                    userDecision = "NO";
+                    break;
+                  }
+                }
+              }
+              if (userDecision !== "TIMEOUT") break;
+            }
+
+            core.setOutput("decision", userDecision);
+
+      - name: "⚙️ پردازش تصمیم مدیر"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const decision = "${{ steps.prompt_step.outputs.decision }}";
+            let reply = "";
+
+            if (decision === "YES") {
+              reply = "✅ **پوشه `ping/` و تمام آرشیو لاگ‌ها با موفقیت حذف شدند.**\nدر تست بعدی، پوشه به‌صورت خودکار بازسازی خواهد شد.";
+            } else if (decision === "NO") {
+              reply = "🙏 **عملیات پاکسازی با دستور شما لغو شد.** از همراهی شما سپاسگزاریم!";
+            } else {
+              reply = "⏰ **مهلت ۱ دقیقه‌ای شما به پایان رسید مدیر گرامی؛ پاسخی دریافت نشد.** عملیات لغو گردید و هیچ فایلی پاک نشد.";
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: reply
+            });
+
+      - name: "🗑 اعمال حذف فیزیکی پوشه از گیت در صورت انتخاب «بله»"
+        if: steps.prompt_step.outputs.decision == 'YES'
+        run: |
+          git config --global user.name "Yoshik Ping Engine"
+          git config --global user.email "ping-engine@users.noreply.github.com"
+          git pull --rebase origin main || true
+          rm -rf ping/
+          git add -A
+          git commit -m "🧹 پاکسازی کامل پوشه ping توسط مدیر [skip ci]" || echo "پوشه‌ای برای حذف نبود"
+          git push
