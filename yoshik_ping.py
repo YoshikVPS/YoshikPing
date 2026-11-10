@@ -3,9 +3,19 @@ import re
 import sys
 import time
 import socket
+import datetime
 import urllib.request
 import urllib.error
 import jdatetime
+
+# تنظیم دقیق منطقه زمانی رسمی ایران (UTC + 03:30)
+IRAN_TZ = datetime.timezone(datetime.timedelta(hours=3, minutes=30))
+
+def get_tehran_shamsi():
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    now_tehran = now_utc.astimezone(IRAN_TZ)
+    shamsi = jdatetime.datetime.fromgregorian(datetime=now_tehran)
+    return shamsi, now_tehran
 
 def normalize_digits(text: str) -> str:
     persian_arabic = "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩"
@@ -24,7 +34,6 @@ def get_public_ip():
     return "نامشخص"
 
 def resolve_host_ip(host: str) -> str:
-    """تبدیل دامنه به آی‌پی اختصاصی سرور مقصد"""
     try:
         return socket.gethostbyname(host)
     except Exception:
@@ -40,7 +49,6 @@ def test_http_https(host, port, proto):
             return True, f"موفق (کد {response.status})", latency
     except urllib.error.HTTPError as e:
         latency = round((time.time() - start) * 1000, 2)
-        # سرور زنده است و پاسخ وب داده است
         return True, f"پاسخ وب (کد {e.code})", latency
     except Exception as e:
         latency = round((time.time() - start) * 1000, 2)
@@ -124,14 +132,17 @@ def main():
     if not targets:
         with open("summary_comment.md", "w", encoding="utf-8") as f:
             f.write("⚠️ **خطای ورودی:** ساختار دستور شناخته نشد.\n\n"
-                    "مثال استاندارد:\n"
+                    "نمونه دستور استاندارد:\n"
                     "`/ping parspack.com:443(https,tcp),217.218.155.155:53(udp,tcp) (تایم)-1`")
         return
 
     runner_ip = get_public_ip()
     total_seconds = duration_min * 60
-    start_epoch = time.time()
+    start_time_monotonic = time.time()
     
+    start_shamsi, _ = get_tehran_shamsi()
+    start_time_display = start_shamsi.strftime("%H:%M:%S")
+
     summary = {}
     for t in targets:
         for proto in t["protocols"]:
@@ -148,7 +159,7 @@ def main():
             }
 
     rounds = 0
-    while (time.time() - start_epoch) < total_seconds:
+    while (time.time() - start_time_monotonic) < total_seconds:
         rounds += 1
         for t in targets:
             host = t["host"]
@@ -172,21 +183,29 @@ def main():
 
         time.sleep(max(2.0, min(5.0, len(targets) * 0.5)))
 
-    now_shamsi = jdatetime.datetime.now()
-    shamsi_timestamp = now_shamsi.strftime("%Y-%m-%d_%H-%M-%S")
-    display_time = now_shamsi.strftime("%Y/%m/%d — %H:%M:%S")
+    end_time_monotonic = time.time()
+    elapsed_total_seconds = int(end_time_monotonic - start_time_monotonic)
+    elapsed_minutes = elapsed_total_seconds // 60
+    elapsed_sec = elapsed_total_seconds % 60
+    duration_str = f"{elapsed_minutes} دقیقه و {elapsed_sec} ثانیه" if elapsed_minutes > 0 else f"{elapsed_sec} ثانیه"
+
+    end_shamsi, _ = get_tehran_shamsi()
+    shamsi_timestamp = end_shamsi.strftime("%Y-%m-%d_%H-%M-%S")
+    end_time_display = end_shamsi.strftime("%H:%M:%S")
+    display_date = end_shamsi.strftime("%Y/%m/%d")
 
     filename = f"ping_{shamsi_timestamp}.txt"
     filepath = os.path.join("ping", filename)
 
-    # ایجاد فایل متنی جامع در پوشه ping
+    # نوشتن لاگ کامل
     with open(filepath, "w", encoding="utf-8") as f:
         f.write("╔══════════════════════════════════════════════════════════════════╗\n")
         f.write("║           📡 گزارش رسمی پایش شبکه | سامانه یوشیک پینگ            ║\n")
         f.write("╚══════════════════════════════════════════════════════════════════╝\n")
-        f.write(f"🌐 آی‌پی سرور اجراکننده (مایکروسافت): {runner_ip}\n")
-        f.write(f"📅 زمان پایان تست (شمسی): {display_time}\n")
-        f.write(f"⏱ مدت زمان مانیتورینگ: {duration_min} دقیقه ({rounds} مرحله پایش)\n")
+        f.write(f"🌐 آی‌پی سرور مایکروسافت: {runner_ip}\n")
+        f.write(f"📅 تاریخ تست (ایران): {display_date}\n")
+        f.write(f"⏱ زمان شروع: {start_time_display} | زمان پایان: {end_time_display}\n")
+        f.write(f"⏳ مدت زمان دقیق کل پایش: {duration_str} ({rounds} دور کامل)\n")
         f.write("─" * 68 + "\n\n")
 
         for key, data in summary.items():
@@ -196,18 +215,19 @@ def main():
             f.write(f"   ├─ آی‌پی شناسایی‌شده: {data['ip']}\n")
             f.write(f"   ├─ نرخ اتصال: {data['success']}/{total} موفق\n")
             f.write(f"   ├─ میانگین تاخیر: {avg_lat} ms\n")
-            f.write(f"   └─ آخرین پاسخ دریافتی: {data['last_msg']}\n\n")
+            f.write(f"   └─ آخرین وضعیت: {data['last_msg']}\n\n")
 
     repo_name = os.getenv("GITHUB_REPOSITORY", "")
     raw_file_url = f"https://github.com/{repo_name}/blob/main/{filepath}"
 
-    # پیام مارک‌داون فوق‌العاده شکیل برای کامنت در گیت‌هاب
+    # ایجاد کامنت برای گیت‌هاب
     with open("summary_comment.md", "w", encoding="utf-8") as f:
-        f.write("### ⚡️ نتیجه ارزیابی زنده شبکه | **Yoshik Ping v1.0**\n\n")
+        f.write("### ⚡️ نتیجه ارزیابی دقیق شبکه | **Yoshik Ping v1.0**\n\n")
         f.write(f"> 🖥 **آی‌پی سرور مایکروسافت:** `{runner_ip}`  \n")
-        f.write(f"> 🕒 **زمان ثبت (شمسی):** `{display_time}`  \n")
-        f.write(f"> ⏱ **طول پایش:** `{duration_min}` دقیقه (`{rounds}` مرحله تست دوره‌ای)\n\n")
-        f.write("| هدف ارزیابی | آی‌پی مقصد (Resolved IP) | پروتکل | نرخ موفقیت | میانگین Latency | وضعیت اتصال |\n")
+        f.write(f"> 📅 **تاریخ ارزیابی (شمسی):** `{display_date}`  \n")
+        f.write(f"> 🕒 **زمان شروع:** `{start_time_display}` ➔ **زمان پایان:** `{end_time_display}` (به وقت رسمی ایران)  \n")
+        f.write(f"> ⏱ **مدت دقیق زمان سپری‌شده:** `{duration_str}` (`{rounds}` مرحله پایش دوره‌ای)\n\n")
+        f.write("| هدف ارزیابی | آی‌پی مقصد (Resolved IP) | پروتکل | نرخ موفقیت | میانگین Latency | وضعیت پورت |\n")
         f.write("| :--- | :---: | :---: | :---: | :---: | :--- |\n")
         
         for key, data in summary.items():
@@ -216,11 +236,10 @@ def main():
             status_badge = "🟢 پایدار" if data["success"] == total else ("🟡 نوسان" if data["success"] > 0 else "🔴 قطع")
             target_clean = f"`{data['host']}:{data['port']}`"
             ip_clean = f"`{data['ip']}`"
-            
             f.write(f"| {target_clean} | {ip_clean} | `{data['proto']}` | `{data['success']}/{total}` | {avg_lat} | {status_badge} ({data['last_msg']}) |\n")
 
         f.write(f"\n---\n")
-        f.write(f"📁 **آرشیو لاگ:** [مشاهده فایل گزارش متنی ذخیره شده]({raw_file_url})\n")
+        f.write(f"📁 **آرشیو اختصاصی لاگ:** [مشاهده فایل گزارش متنی ذخیره شده]({raw_file_url})\n")
 
     env_file_path = os.getenv("GITHUB_ENV")
     if env_file_path:
