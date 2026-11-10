@@ -1,0 +1,73 @@
+name: "🚀 موتور پردازش یوشیک پینگ (v1.0)"
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  run-ping-test:
+    name: "🔍 اجرای پایش و اسکن شبکه"
+    if: startsWith(github.event.comment.body, '/ping')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "💬 ارسال پاسخ اولیه به کاربر (در حال آماده‌سازی)"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: "👋 متوجه شدم عزیز دل! من دارم تست‌ها رو انجام میدم، لطفاً صبوری کنید... ⏳🔬"
+            });
+
+      - name: "📥 دریافت کدهای مخزن"
+        uses: actions/checkout@v4
+
+      - name: "🐍 پیکربندی محیط پایتون"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: "📦 نصب پکیج‌های پیش‌نیاز"
+        run: |
+          python -m pip install --upgrade pip
+          pip install jdatetime
+
+      - name: "⚙️ پردازش دستور و پایش شبکه"
+        run: |
+          python yoshik_ping.py "${{ github.event.comment.body }}"
+
+      - name: "💾 ثبت و آرشیو فایل لاگ در مخزن"
+        run: |
+          git config --global user.name "Yoshik Bot"
+          git config --global user.email "yoshik-bot@noreply.github.com"
+          git pull --rebase origin main || true
+          git add ping/
+          git commit -m "📝 ثبت لاگ تست شبکه: $LOG_FILENAME [skip ci]" || echo "تغییری وجود ندارد"
+          git push
+
+      - name: "📢 ارسال نتیجه نهایی در ایشو"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('summary_comment.md')) {
+              const body = fs.readFileSync('summary_comment.md', 'utf8');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+      - name: "⏳ مکث ۵ دقیقه‌ای پایانی قبل از خروج اکشنز"
+        run: |
+          echo "🕒 سیستم به مدت ۵ دقیقه بیدار می‌ماند..."
+          sleep 300
