@@ -1,175 +1,154 @@
 <div align="center">
 
-# 🌐 Yoshik Ping Engine `v1.0-Release`
-### Cloud-Native Network Telemetry & Multi-Protocol Availability Sentinel
+# 🌐 Yoshik Ping Engine `v1.0`
+### Serverless Network Telemetry & Multi-Protocol Audit Sentinel
 
-[![Workflow Status](https://img.shields.io/github/actions/workflow/status/YoshikVPS/ping/yoshik_ping.yml?style=for-the-badge&logo=githubactions&logoColor=white&label=Telemetry%20Engine)](https://github.com/YoshikVPS/ping/actions)
-[![Language](https://img.shields.io/badge/Engine-Python%203.10-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Platform](https://img.shields.io/badge/Infrastructure-Microsoft%20Azure%20Runners-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://github.com/features/actions)
-[![Compliance](https://img.shields.io/badge/GitHub%20Policy-100%25%20AUP%20Compliant-success?style=for-the-badge&logo=checkmarx&logoColor=white)](#-github-compliance--security-statement)
-[![Author](https://img.shields.io/badge/Author-YoshikVPS-black?style=for-the-badge&logo=github)](https://github.com/YoshikVPS)
+[![Engine Status](https://img.shields.io/badge/Engine-Active%20%7C%20Serverless-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://github.com/YoshikVPS/ping/actions)
+[![Language](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![AUP Policy](https://img.shields.io/badge/GitHub%20Policy-100%25%20AUP%20Safe-success?style=for-the-badge&logo=checkmarx&logoColor=white)](#-security--github-policy-compliance)
+[![Creator](https://img.shields.io/badge/Author-YoshikVPS-black?style=for-the-badge&logo=github)](https://github.com/YoshikVPS)
 
-<p align="center">
-  <b>A lightweight, serverless ChatOps network diagnostic system powered by GitHub Actions. Designed for non-intrusive latency measurement, layer 4/7 handshake auditing, and geo-reachability verification from global Microsoft Azure edges.</b>
-</p>
+<br/>
 
-[System Architecture](#-system-architecture) •
-[Protocol Handlers](#-protocol-inspection-matrix) •
-[Command Syntax](#-chatops-command-interface) •
-[GitHub Compliance](#-github-compliance--security-statement) •
-[راهنمای فارسی](#-راهنمای-جامع-فارسی-و-آموزش-استفاده-تخصصی)
+**[🇬🇧 Read in English](#-english-documentation)** &nbsp; | &nbsp; **[🇮🇷 مطالعه راهنمای فارسی](#-مستندات-جامع-فارسی)**
 
 </div>
 
 ---
 
-## 🏛 System Architecture
+# 🇬🇧 English Documentation
 
-The workflow leverages ephemeral Azure-hosted runner nodes to test destination networks without maintaining dedicated infrastructure:
-
-```mermaid
-flowchart TD
-    classDef client fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff;
-    classDef pipeline fill:#1e293b,stroke:#818cf8,stroke-width:2px,color:#fff;
-    classDef core fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#fff;
-    classDef proto fill:#3b0764,stroke:#c084fc,stroke-width:2px,color:#fff;
-    classDef store fill:#450a0a,stroke:#f87171,stroke-width:2px,color:#fff;
-
-    Admin([👤 Network Administrator]):::client -->|1. Issue Trigger `/ping`| Gateway[💬 GitHub Issues ChatOps]:::pipeline
-
-    subgraph AzureHostedRunner [🌐 GitHub Actions Core Pipeline]
-        Gateway -->|2. Verify Token| Gatekeeper{🔐 Identity Validation}:::pipeline
-        Gatekeeper -->|Unauthorized| Drop[⛔️ Drop Session]:::store
-        Gatekeeper -->|Authorized| InitEnv[🚀 Spin Up Runner Container]:::pipeline
-        
-        InitEnv --> Engine[⚙️ Execute `yoshik_ping.py`]:::core
-        
-        subgraph DiagnosticLayer [🔬 Non-Intrusive Probe Engine]
-            Engine --> Resolver[🌍 Socket DNS Resolution]:::core
-            Resolver --> TCP_Probe[📡 TCP 3-Way Handshake]:::proto
-            Resolver --> UDP_Probe[📦 UDP Echo Probe with State Check]:::proto
-            Resolver --> HTTP_Probe[🌐 Layer 7 Web Response Assessment]:::proto
-            Resolver --> TLS_Probe[🔒 Transport Layer Security Handshake]:::proto
-        end
-
-        DiagnosticLayer --> Aggregator[⏱ Tehran Time Conversion & Latency Average]:::core
-        Aggregator --> Archive[💾 Commit Text Report to /ping Directory]:::store
-        Archive --> Reply[📢 Post Telemetry Summary Table in Issue]:::pipeline
-    end
-
-    Reply --> Admin
-```
+An on-demand, non-intrusive network health monitor running on Microsoft Azure runner nodes via GitHub Actions ChatOps. It diagnoses latency, handshake status, and cross-border edge reachability without requiring a dedicated VPS.
 
 ---
 
-## 🔬 Protocol Inspection Matrix
+### 🕹 ChatOps Command Syntax
 
-Yoshik Ping does not perform blind port knocks. Each probe executes precise, low-overhead socket handshakes:
+Initiate diagnostics by submitting a comment on any repository **Issue**:
 
-| Protocol | Socket Technique | Evaluation Criteria (UP) | Failure Signature (DOWN) |
-| :---: | :--- | :--- | :--- |
-| **`TCP`** | Full OS Socket 3-Way Handshake (`SYN ➔ SYN/ACK ➔ ACK`) | Established connection within 3.5s timeout | `ConnectionRefusedError`, host down, or dropped SYN |
-| **`UDP`** | Payload injection with socket response capture | Active datagram return (>= 1 byte payload) | Socket timeout (firewall drop / blackhole routing) |
-| **`HTTPS`** | TLS v1.2/v1.3 Handshake + Layer 7 HTTP request | Returns valid status code (`2xx`, `3xx`, or even `403`) | SSL certificate expiry, TLS mismatch, or TCP drop |
-| **`HTTP`** | Clear-text `HTTP/1.1 GET` request with modern User-Agent | Web daemon responds with standard status code | Target port closed or remote proxy drops raw HTTP |
-
----
-
-## 🕹 ChatOps Command Interface
-
-Execute diagnostics directly within any Issue thread using native syntax:
-
-### 1. Multi-Target Comprehensive Audit
+#### 1. Multi-Protocol Inspection Command
 ```text
 /ping parspack.com:443(https,http,tcp,udp),arvancloud.ir:443(https,tcp),217.218.155.155:53(udp,tcp) (تایم)-1
 ```
-* **Duration Token `(تایم)-<N>`:** Sets total audit loop duration between `1` and `59` minutes.
-* **Protocol Token `(<protocols>)`:** Target-specific protocols delimited by commas (`tcp`, `udp`, `http`, `https`).
+* **Protocol Target:** Specify ports with protocols: `(tcp,udp,http,https)`
+* **Loop Duration:** `(تایم)-<N>` where `<N>` is the duration in minutes (1 to 59).
 
-### 2. Interactive Safe Archive Cleanup
-To prevent repository bloat, run the interactive cleanup routine:
-1. Submit comment: `پاکسازی`
-2. The engine responds with a verification request. Reply within 60 seconds:
-   - `بله` ➔ Confirms and executes git purge of the `/ping/` directory.
-   - `خیر` ➔ Aborts cleanup and preserves all logs.
-   - Timeout (60s) ➔ Automatic cancellation without state change.
+#### 2. Interactive Archive Purge
+```text
+پاکسازی
+```
+* Prompts for confirmation. Reply with `بله` (Yes) within 60 seconds to purge `/ping/` log files, or `خیر` (No) to cancel.
 
 ---
 
-## 🛡 GitHub Compliance & Security Statement
+### 🔬 Technical Inspection Matrix
+
+Yoshik Ping avoids arbitrary port knocking; every probe runs low-overhead native socket connections:
+
+| Protocol | Socket Verification Method | Success State (UP) | Failure Signature (DOWN) |
+| :---: | :--- | :--- | :--- |
+| **`TCP`** | Full OS Socket 3-Way Handshake (`SYN ➔ SYN/ACK ➔ ACK`) | Established connection `< 3.5s` | Connection refused / drop |
+| **`UDP`** | Payload injection with socket response capture | Active datagram return (`>= 1B`) | Datagram socket timeout |
+| **`HTTPS`** | TLS Handshake + Layer 7 HTTP verification | Valid web response status code | Certificate error / drop |
+| **`HTTP`** | Standard HTTP/1.1 GET request | Server response processed | Daemon inactive / port closed |
+
+---
+
+### 🛡 Security & GitHub Policy Compliance
 
 > [!NOTE]
-> **Notice for GitHub Security, Abuse Detection, and Policy Automation:**
-> 
-> * **Project Intent:** This repository operates strictly as a personal, developer-level uptime checker and network latency measurement tool. It is designed to verify cross-border routing to authorized internal infrastructure and public domains.
-> * **No Hostile Scanning:** It does **NOT** conduct mass vulnerability scans, brute-force attacks, port range sweeps, or denial-of-service traffic. Probes are issued strictly against explicit hostnames/ports provided directly by the authenticated administrator.
-> * **Rate Limiting:** Inherent throttling (`time.sleep` intervals of 2.0s to 5.0s per loop) ensures low packet transmission rates, well below standard ICMP/HTTP monitoring thresholds.
-> * **Resource Efficiency:** Execution runs on-demand via comment events and shuts down promptly. No continuous or runaway cron schedules are active.
-> * **Compliance Status:** Fully adheres to the [GitHub Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies).
+> **Notice for GitHub Trust & Safety and Policy Automation:**
+> * **Zero-Abuse Architecture:** This repository is strictly a personal uptime checker and latency measurement tool. It does **NOT** conduct mass port scanning, vulnerability probing, or denial-of-service traffic.
+> * **Targeted Diagnostics:** Probes are executed only against explicit endpoints provided by the authenticated repository owner.
+> * **Rate Limiting:** Enforces strict intervals (`time.sleep` between 2.0s and 5.0s per loop) to ensure negligible overhead.
+> * **Resource Throttling:** Runs strictly on-demand via comment events and shuts down promptly. No continuous or aggressive cron jobs are scheduled.
+> * **Policy Status:** Fully compliant with [GitHub Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies).
 
 ---
 
-## 👨‍💻 Engineering & Authorship
+### 👥 How to Deploy on Your Account (Fork Guide)
 
-- **Architecture & System Design:** [YoshikVPS](https://github.com/YoshikVPS)
-- **Repository Source:** [https://github.com/YoshikVPS/ping](https://github.com/YoshikVPS/ping)
-- **Engine Core:** Python 3.10 Standard Library (`socket`, `urllib`, `time`, `jdatetime`)
+1. Click **Fork** at the top right of this repository.
+2. In your forked repository, navigate to **Settings ➔ Actions ➔ General**.
+3. Under **Workflow permissions**, select **Read and write permissions** and click **Save**.
+4. Go to **Settings ➔ Secrets and variables ➔ Actions** and create a **New repository secret**:
+   * **Name:** `ADMIN_USERNAME`
+   * **Secret:** Your GitHub username (e.g. `YoshikVPS`)
+5. Open an Issue and comment `/ping` to run your first diagnostic.
+
+---
+<br/>
+
+<div align="center">
+  <h2>════════════════════════════════════════════</h2>
+</div>
+
+<br/>
 
 ---
 
-## 🇮🇷 راهنمای جامع فارسی و آموزش استفاده تخصصی
+# 🇮🇷 مستندات جامع فارسی
 
-<details>
-<summary><b>👈 برای مشاهده مستندات کامل فارسی، نحوه راه‌اندازی و پورت کردن کلیک کنید</b></summary>
-
-<br>
-
-### 📖 معرفی اجمالی پروژه
-پروژه **یوشیک پینگ (Yoshik Ping)** یک ابزار سبک مانیتورینگ شبکه بر پایه معماری ChatOps است که روی زیرساخت رانرهای رسمی مایکروسافت/گیت‌هاب اجرا می‌شود. این ابزار به شما امکان می‌دهد بدون نیاز به خرید سرور مجازی خارج از کشور، وضعیت باز بودن پورت‌ها، دسترسی به وب‌سرویس‌ها، تحریم‌های بین‌المللی و تاخیر رفت‌وبرگشت (Latency) سرورها و فایروال‌های خود را ارزیابی نمایید.
+سامانه هوشمند و سبک مانیتورینگ وضعیت سلامت شبکه، پایش پورت‌ها و رادار تحریم مبتنی بر زیرساخت پردازشی مایکروسافت/گیت‌هاب با معماری تعاملی **ChatOps**.
 
 ---
 
-### 🚀 نحوه پورت و راه‌اندازی روی اکانت شخصی (قدم به قدم)
+### 🚀 نحوه ارسال دستورات در Issues
 
-اگر می‌خواهید این سیستم را بدون تغییر در کدهای اصلی برای خودتان داشته باشید و از سهمیه رایگان اکشنز مخزن خودتان استفاده کنید:
+برای شروع تست شبکه، وارد بخش **Issues** مخزن شوید و در کادر کامنت دستور خود را ارسال کنید:
 
-1. **انشعاب مخزن (Fork):**
-   * در بالای همین صفحه روی دکمه **Fork** کلیک کنید تا یک نسخه کپی از مخزن وارد حساب کاربری شما شود.
+#### ۱. دستور تست جامع پروتکل‌ها
+```text
+/ping parspack.com:443(https,http,tcp,udp),arvancloud.ir:443(https,tcp),217.218.155.155:53(udp,tcp) (تایم)-1
+```
+* **مدت زمان تست:** با قرار دادن `(تایم)-1` مدت تست را از ۱ تا ۵۹ دقیقه مشخص کنید.
+* **انتخاب پروتکل:** برای هر پورت می‌توانید یک یا چند پروتکل از بین `http`, `https`, `tcp`, `udp` را انتخاب کنید.
 
-2. **فعال‌سازی مجوزهای رایت در گیت‌هاب اکشنز:**
-   * در ریپازیتوری فورک‌شده خود وارد بخش **Settings** شوید.
-   * از منوی سمت چپ به مسیر **Actions** ➔ **General** بروید.
-   * در پایین صفحه بخش **Workflow permissions** را پیدا کرده و گزینه **Read and write permissions** را انتخاب و ذخیره (**Save**) نمایید.
-
-3. **تعریف کلید مدیر (Secret) جهت جلوگیری از سوءاستفاده:**
-   * وارد بخش **Settings** ➔ **Secrets and variables** ➔ **Actions** شوید.
-   * دکمه سبز رنگ **New repository secret** را بزنید:
-     - نام سکرت (Name): `ADMIN_USERNAME`
-     - مقدار سکرت (Secret): نام کاربری گیت‌هاب خودتان (مثلاً اگر آیدی شما `JohnDoe` است، همین را وارد کنید).
-   * دکمه **Add secret** را بزنید.
-
-4. **اجرای تست:**
-   * به تب **Issues** بروید، یک Issue جدید باز کنید یا در یکی از ایشوها کامنت بگذارید:
-   ```text
-   /ping parspack.com:443(https,tcp),arvancloud.ir:443(https,tcp),217.218.155.155:53(udp,tcp) (تایم)-1
-   ```
-   * بات بلافاصله به شما پاسخ داده و پس از پایان ۱ دقیقه پایش، جدول نتایج را همراه با آی‌پی دقیق سرور مایکروسافت، آی‌پی رزولوشین دامنه‌ها و ساعت دقیق تهران ریپلای خواهد کرد.
+#### ۲. پاکسازی آرشیو لاگ‌ها
+برای حذف گزارش‌های متنی و تمیز ماندن مخزن، کافی است در کامنت بنویسید:
+```text
+پاکسازی
+```
+* ربات از شما تاییدیه می‌خواهد. ظرف مدت ۶۰ ثانیه بنویسید **`بله`** تا پوشه لاگ‌ها حذف شود یا بنویسید **`خیر`** تا لغو گردد.
 
 ---
 
-### 🧹 مدیریت فضا و پاکسازی خودکار
-برای جلوگیری از سنگین شدن مخزن، فایل‌های لاگ متنی درون پوشه `ping/` آرشیو می‌شوند. هر زمان مایل بودید این پوشه را پاک کنید:
-1. در کامنت بنویسید: `پاکسازی`
-2. سیستم از شما تاییدی می‌گیرد؛ تا ۶۰ ثانیه فرصت دارید با نوشتن **`بله`** حذف را تایید یا با نوشتن **`خیر`** عملیات را متوقف کنید.
+### 📋 نمونه گزارش تحلیلی ربات در ایشو
 
-</details>
+> 🖥 **آی‌پی سرور مایکروسافت:** `20.163.133.232`  
+> 📅 **تاریخ ارزیابی (شمسی):** `1405/08/19`  
+> 🕒 **بازه پایش:** `22:10:02` ➔ `22:11:04` (به وقت رسمی ایران)  
+> ⏱ **طول پایش دقیق:** `1 دقیقه و 2 ثانیه` (`10` مرحله ارزیابی)
+
+| هدف ارزیابی | آی‌پی مقصد (Resolved IP) | پروتکل | نرخ موفقیت | میانگین Latency | وضعیت پورت |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| `parspack.com:443` | `194.26.195.206` | `HTTPS` | `10/10` | `667.16 ms` | 🟢 پایدار (موفق (کد 200)) |
+| `parspack.com:443` | `194.26.195.206` | `TCP` | `10/10` | `163.05 ms` | 🟢 پایدار (پورت TCP باز است) |
+| `217.218.155.155:53` | `217.218.155.155` | `UDP` | `10/10` | `196.69 ms` | 🟢 پایدار (پاسخ UDP دریافت شد) |
+| `217.218.155.155:53` | `217.218.155.155` | `TCP` | `0/10` | `ناموفق` | 🔴 قطع (Connection refused) |
+
+---
+
+### ⚙️ آموزش راه‌اندازی و پورت کردن روی مخزن شخصی
+
+اگر می‌خواهید این سیستم را بدون دستکاری کدها روی اکانت خود داشته باشید و از سهمیه رانرهای رایگان خودتان استفاده کنید:
+
+1. **فورک کردن:** در بالای همین صفحه روی دکمه **Fork** بزنید تا پروژه به حساب شما منتقل شود.
+2. **تنظیم دسترسی Write در اکشنز:**
+   * در مخزن خود به مسیر **Settings ➔ Actions ➔ General** بروید.
+   * در پایین صفحه بخش **Workflow permissions** گزینه **Read and write permissions** را انتخاب و **Save** کنید.
+3. **تعریف نام مدیر در Secret:**
+   * به مسیر **Settings ➔ Secrets and variables ➔ Actions** بروید.
+   * روی **New repository secret** بزنید:
+     - **Name:** `ADMIN_USERNAME`
+     - **Secret:** نام‌کاربری گیت‌هاب خودتان (مثلاً: `YoshikVPS`)
+4. **شروع پایش:** وارد تب **Issues** شوید و تست را شروع کنید!
 
 ---
 
 <div align="center">
 
-```
-   Yoshik Network Labs • Engineered for Precision • Zero-Cost Cloud Telemetry
-```
+Built with precision by [YoshikVPS](https://github.com/YoshikVPS)  
+**Yoshik VPS Network Lab**
 
 </div>
