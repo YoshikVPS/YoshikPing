@@ -1,0 +1,3 @@
+.github/workflows/*.yml linguist-detectable=true
+.github/workflows/*.yml linguist-documentation=false
+ping/* linguist-vendored=true
