@@ -86,7 +86,7 @@ jobs:
   # ========================================================
   cleanup-storage:
     name: "🧹 پاکسازی آرشیو پوشه لاگ‌ها"
-    if: github.event.issue != null && trim(github.event.comment.body) == 'پاکسازی'
+    if: github.event.issue != null && contains(github.event.comment.body, 'پاکسازی')
     runs-on: ubuntu-latest
 
     steps:
@@ -116,7 +116,7 @@ jobs:
             });
 
             const startTime = Date.now();
-            const timeoutMs = 60 * 1000; // مهلت دقیق ۱ دقیقه
+            const timeoutMs = 60 * 1000;
             let userDecision = "TIMEOUT";
 
             while (Date.now() - startTime < timeoutMs) {
