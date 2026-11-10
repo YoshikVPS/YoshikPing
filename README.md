@@ -1,8 +1,11 @@
 <div align="center">
 
-# 🌐 یوشیک پینگ نسخه ۱.۰ | Yoshik Ping Engine v1.0
-### سامانه ابری پایش ترافیک مرزی و وضعیت اتصال سرورها از دیتاسنترهای مایکروسافت
-**Serverless Cross-Border Telemetry & National Intranet Edge Diagnostic Sentinel**
+<img src="https://raw.githubusercontent.com/YoshikVPS/ping/main/photo_2026-02-07_07-40-29.jpg" width="220" style="border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);" alt="Yoshik Ping Official Logo" />
+
+<br/><br/>
+
+# 🌐 Yoshik Ping Engine `v1.0`
+### Serverless Network Telemetry & Multi-Protocol Audit Sentinel
 
 [![Engine Status](https://img.shields.io/badge/Engine-Active%20%7C%20Serverless-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://github.com/YoshikVPS/ping/actions)
 [![Language](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
@@ -16,126 +19,40 @@
 
 <br/>
 
-**[🇮🇷 پرش به راهنمای فارسی و سناریوی اینترنت ملی](#-مستندات-جامع-فارسی)** &nbsp; | &nbsp; **[🇬🇧 Jump to English Documentation](#-english-documentation)**
+**[📖 پرش به مستندات فارسی و سناریوی اینترنت ملی](#-مستندات-جامع-فارسی)** &nbsp; | &nbsp; **[🇬🇧 Jump to English Documentation](#-english-documentation)**
 
 </div>
-
----
-
-# 🇮🇷 مستندات جامع فارسی
-
-### 💡 ایده و فلسفه مهندسی: دیده‌بان ترافیک در شرایط اختلال شبکه و اینترنت ملی
-
-در شرایطی که دسترسی به اینترنت بین‌الملل دچار اختلال شدید می‌شود یا وضعیت شبکه به اصطلاح به سمت **اینترنت ملی (سیاه‌چاله ترافیک بین‌الملل / National Intranet Isolation)** پیش می‌رود، یکی از بزرگ‌ترین چالش‌های مدیران سرور و مهندسین شبکه این است:  
-> **«آیا سرور و دیتاسنتر داخل کشور من، هنوز از خارج از مرزها ترافیک دریافت می‌کند؟ آیا پورت‌ها از بیرون مسدود شده‌اند یا ترافیک در مرز Drop می‌شود؟»**
-
-از آنجا که پلتفرم **GitHub** اغلب به عنوان بستر حیاتی توسعه‌دهندگان نرم‌افزار در دسترس می‌ماند، **یوشیک پینگ (Yoshik Ping v1.0)** به عنوان یک پل ارتباطی بدون هزینه (Serverless) عمل می‌کند:
-1. شما بدون نیاز به اتصال مستقیم به خارج، از طریق محیط ایشوهای گیت‌هاب دستور `/ping` را ثبت می‌کنید.
-2. موتورهای قدرتمند مایکروسافت (Azure Nodes) در اروپا و آمریکا بیدار می‌شوند.
-3. ترافیک آزمایشی همزمان (TCP/UDP/HTTP/HTTPS) از خارج از مرزها به سمت IP سرور مقصد شما در ایران شلیک می‌شود.
-4. پاسخ این سوال که **«آیا ترافیک ورودی به ایران می‌رسد یا تحریم/فیلتر است؟»** در قالب جدول تاخیر (Latency) به شما گزارش داده می‌شود.
-
----
-
-### 🧭 فلوچارت ۳ بعدی مسیر ترافیک خارجی به سمت زیرساخت داخلی
-
-```mermaid
-flowchart TB
-    %% لایه‌های بصری سه‌بعدی
-    classDef edgeCloud fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
-    classDef azure fill:#003865,stroke:#0078d4,stroke-width:2px,color:#ffffff;
-    classDef borderGate fill:#451a03,stroke:#f59e0b,stroke-width:2px,color:#fde68a;
-    classDef iranNet fill:#14532d,stroke:#22c55e,stroke-width:2px,color:#dcfce7;
-    classDef dropNode fill:#7f1d1d,stroke:#ef4444,stroke-width:2px,color:#fee2e2;
-
-    subgraph GLOBAL_PLANE [🌐 فضای ترافیک جهانی / لایه ابری مایکروسافت]
-        User[👤 مدیر شبکه داخل ایران]:::edgeCloud -->|ارسال کامند ChatOps در ایشو| GHIssue[💬 GitHub Webhook Gateway]:::edgeCloud
-        GHIssue --> AzureRunner[⚡️ سرورهای رانر مایکروسافت Azure - خارج از کشور]:::azure
-        
-        AzureRunner --> EngineCore{🔬 موتور پایش موازی Yoshik Engine}:::azure
-        EngineCore -->|پروتکل 1| T1[📡 TCP SYN 3-Way Handshake]:::azure
-        EngineCore -->|پروتکل 2| T2[📦 UDP Datagram Probe]:::azure
-        EngineCore -->|پروتکل 3| T3[🔒 HTTPS/TLS Handshake]:::azure
-        EngineCore -->|پروتکل 4| T4[🌐 HTTP Web Daemon GET]:::azure
-    end
-
-    subgraph BORDER_FIREWALL [🚧 مرز شبکه بین‌الملل و فایروال کشوری]
-        T1 & T2 & T3 & T4 --> BorderCheck{وضعیت عبور از گیت‌وی مرزی}:::borderGate
-    end
-
-    BorderCheck -->|ترافیک بلاک شده / قطعی بین‌الملل| BlockDrop[🔴 ترافیک مسدود: Timeout / Blackhole / 0/10]:::dropNode
-    BorderCheck -->|پورت باز / عبور سالم| AllowPass[🟢 ترافیک عبوری: Latency ثبت شد / 10/10]:::iranNet
-
-    subgraph IRAN_INFRASTRUCTURE [🇮🇷 سرورها و دیتاسنترهای مقصد در ایران]
-        AllowPass --> DC1[🏢 دیتاسنتر پارس‌آنلاین / پارس‌پک]:::iranNet
-        AllowPass --> DC2[☁️ سرورهای لبه ابرآروان / دیتاسنترهای اختصاصی]:::iranNet
-        AllowPass --> DC3[📡 دی‌ان‌اس ملی و سرورهای زیرساخت]:::iranNet
-    end
-
-    BlockDrop -.-> SummaryResult[📊 تولید گزارش نهایی]:::edgeCloud
-    DC1 & DC2 & DC3 -.-> SummaryResult
-    SummaryResult -->|ریپلای در ایشو گیت‌هاب| User
-```
-
----
-
-### 🕹 راهنمای ارسال دستورات در Issue
-
-کافیست وارد بخش **Issues** مخزن شوید و دستور دلخواه را در کادر کامنت بفرستید:
-
-#### ۱. بررسی موازی ۴ پروتکل روی سرورها:
-```text
-/ping parspack.com:443(https,http,tcp,udp),arvancloud.ir:443(https,tcp),217.218.155.155:53(udp,tcp) (تایم)-1
-```
-* **`(تایم)-1`:** مدت زمان ارزیابی مستمر بر حسب دقیقه (بین ۱ تا ۵۹ دقیقه).
-* **پروتکل‌ها:** قابلیت تفکیک هر ۴ پروتکل به صورت مجزا یا ترکیبی برای هر پورت.
-
-#### ۲. پاکسازی آرشیو گزارش‌ها:
-برای حذف پوشه لاگ‌ها (`ping/`) و جلوگیری از حجیم شدن مخزن:
-```text
-پاکسازی
-```
-* سیستم با اخطار پاسخ می‌دهد؛ ظرف **۱ دقیقه** با نوشتن **`بله`** تایید یا با **`خیر`** عملیات را لغو نمایید.
-
----
-
-### ⚙️ پورْت سریع روی اکانت شما (راهنمای استفاده اختصاصی)
-
-<div align="center">
-
-[![Fork Immediately](https://img.shields.io/badge/برای_پورت_کردن_کلیک_کنید-Fork_Now-238636?style=for-the-badge&logo=github&logoColor=white)](https://github.com/YoshikVPS/ping/fork)
-
-</div>
-
-1. روی دکمه سبز رنگ بالا کلیک کنید تا مخزن به اکانت شخصی شما منتقل شود.
-2. در مخزن فورک‌شده به مسیر **Settings ➔ Actions ➔ General** رفته و در انتهای صفحه گزینه **Read and write permissions** را انتخاب و ذخیره کنید.
-3. به مسیر **Settings ➔ Secrets and variables ➔ Actions** بروید و سکرت زیر را بسازید:
-   * **Name:** `ADMIN_USERNAME`
-   * **Secret:** نام‌کاربری گیت‌هاب خودتان (مثلاً: `YoshikVPS`)
-4. وارد تب **Issues** مخزن خود شوید و تست را شروع کنید!
-
----
-<br/>
-
-<div align="center">
-  <h2>═══════════════════════════════════════════════════════</h2>
-</div>
-
-<br/>
 
 ---
 
 # 🇬🇧 English Documentation
 
-### 🔬 Architecture & National Edge Inspection Concept
-
-**Yoshik Ping Engine v1.0** is an event-driven, non-intrusive network health and cross-border latency diagnostic sentinel. Built on GitHub Actions and executed natively on Microsoft Azure nodes, it provides developers and sysadmins with high-precision telemetry when inspecting internal infrastructure from an external vantage point.
-
-During network routing anomalies or edge gateway filtering (such as national intranet routing policies), knowing whether global traffic successfully penetrates borders to reach edge data centers is crucial. **Yoshik Ping** allows engineers to initiate live telemetry probes directly from GitHub Issues, receiving detailed Layer 4 & Layer 7 verification matrices within minutes.
+An on-demand, non-intrusive network health monitor running on Microsoft Azure runner nodes via GitHub Actions ChatOps. It diagnoses latency, handshake status, and cross-border edge reachability without requiring a dedicated VPS.
 
 ---
 
-### 🔬 Protocol Inspection Matrix
+### 🕹 ChatOps Command Syntax
+
+Initiate diagnostics by submitting a comment on any repository **Issue**:
+
+#### 1. Multi-Protocol Inspection Command
+```text
+/ping parspack.com:443(https,http,tcp,udp),arvancloud.ir:443(https,tcp),217.218.155.155:53(udp,tcp) (تایم)-1
+```
+* **Protocol Target:** Specify ports with protocols: `(tcp,udp,http,https)`
+* **Loop Duration:** `(تایم)-<N>` where `<N>` is the duration in minutes (1 to 59).
+
+#### 2. Interactive Archive Purge
+```text
+پاکسازی
+```
+* Prompts for confirmation. Reply with `بله` (Yes) within 60 seconds to purge `/ping/` log files, or `خیر` (No) to cancel.
+
+---
+
+### 🔬 Technical Inspection Matrix
+
+Yoshik Ping avoids arbitrary port knocking; every probe runs low-overhead native socket connections:
 
 | Protocol | Socket Verification Method | Success State (UP) | Failure Signature (DOWN) |
 | :---: | :--- | :--- | :--- |
@@ -143,19 +60,6 @@ During network routing anomalies or edge gateway filtering (such as national int
 | **`UDP`** | Payload injection with socket response capture | Active datagram return (`>= 1B`) | Datagram socket timeout |
 | **`HTTPS`** | TLS Handshake + Layer 7 HTTP verification | Valid web response status code | Certificate error / drop |
 | **`HTTP`** | Standard HTTP/1.1 GET request | Server response processed | Daemon inactive / port closed |
-
----
-
-### 🕹 ChatOps Command Syntax
-
-```text
-/ping <TARGET_HOST>:<PORT>(<PROTOCOLS>) (تایم)-<MINUTES>
-```
-
-**Example:**
-```text
-/ping parspack.com:443(https,http,tcp,udp),arvancloud.ir:443(https,tcp),217.218.155.155:53(udp,tcp) (تایم)-1
-```
 
 ---
 
@@ -168,6 +72,108 @@ During network routing anomalies or edge gateway filtering (such as national int
 > * **Rate Limiting:** Enforces strict intervals (`time.sleep` between 2.0s and 5.0s per loop) to ensure negligible overhead.
 > * **Resource Throttling:** Runs strictly on-demand via comment events and shuts down promptly. No continuous or aggressive cron jobs are scheduled.
 > * **Policy Status:** Fully compliant with [GitHub Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies).
+
+---
+<br/>
+
+<div align="center">
+  <h2>═══════════════════════════════════════════════════════</h2>
+</div>
+
+<br/>
+
+---
+
+# <img src="https://raw.githubusercontent.com/YoshikVPS/ping/main/photo_2026-02-07_07-40-29.jpg" width="30" style="vertical-align: middle; border-radius: 4px;" /> مستندات جامع فارسی | یوشیک پینگ نسخه ۱.۰
+
+### 💡 ایده و فلسفه مهندسی: دیده‌بان ترافیک در شرایط اختلال شبکه و اینترنت ملی
+
+در شرایطی که دسترسی به اینترنت بین‌الملل دچار اختلال شدید می‌شود یا وضعیت شبکه به سمت **سیاه‌چاله ترافیک بین‌الملل (National Intranet Isolation)** پیش می‌رود، یکی از بزرگ‌ترین چالش‌های مدیران سرور و متخصصان شبکه این است:  
+> **«آیا سرور و دیتاسنتر من در داخل کشور، هنوز از خارج از مرزها ترافیک دریافت می‌کند؟ آیا پورت‌ها از بیرون مسدود شده‌اند یا ترافیک در لبه مرزی فیلتر می‌شود؟»**
+
+از آنجا که پلتفرم **GitHub** به عنوان ابزار کاری توسعه‌دهندگان معمولاً در دسترس می‌ماند، **یوشیک پینگ (Yoshik Ping v1.0)** به عنوان یک رادار خارجی بدون هزینه (Serverless) عمل می‌کند:
+1. شما بدون نیاز به اتصال مستقیم یا ابزارهای دورزدن تحریم، از داخل Issueهای گیت‌هاب دستور `/ping` را ثبت می‌کنید.
+2. سرورهای رانر مایکروسافت (Azure Nodes) در اروپا و آمریکا بیدار می‌شوند.
+3. ترافیک پایش واقعی (TCP/UDP/HTTP/HTTPS) از خارج از مرزها به سمت سرور مقصد شما در ایران تست می‌شود.
+4. جدول تاخیر (Latency) و سلامت دسترسی مرزی در همان ایشو به صورت زنده برای شما ریپلای خواهد شد.
+
+---
+
+### 🧭 فلوچارت ۳ بعدی مسیر ترافیک خارجی به سمت سرورهای داخلی
+
+```mermaid
+flowchart TB
+    classDef edgeCloud fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
+    classDef azure fill:#003865,stroke:#0078d4,stroke-width:2px,color:#ffffff;
+    classDef borderGate fill:#451a03,stroke:#f59e0b,stroke-width:2px,color:#fde68a;
+    classDef iranNet fill:#14532d,stroke:#22c55e,stroke-width:2px,color:#dcfce7;
+    classDef dropNode fill:#7f1d1d,stroke:#ef4444,stroke-width:2px,color:#fee2e2;
+
+    subgraph GLOBAL_PLANE [🌐 ترافیک جهانی / لایه ابری مایکروسافت]
+        User[👤 مدیر سیستم در داخل کشور]:::edgeCloud -->|ارسال کامند ChatOps در Issue| GHIssue[💬 GitHub Issue Webhook]:::edgeCloud
+        GHIssue --> AzureRunner[⚡️ سرورهای رانر Azure مایکروسافت - خارج از کشور]:::azure
+        
+        AzureRunner --> EngineCore{🔬 هسته آزمون ۴ پروتکل Yoshik Engine}:::azure
+        EngineCore -->|پروتکل 1| T1[📡 TCP SYN 3-Way Handshake]:::azure
+        EngineCore -->|پروتکل 2| T2[📦 UDP Datagram Socket Probe]:::azure
+        EngineCore -->|پروتکل 3| T3[🔒 HTTPS/TLS Handshake]:::azure
+        EngineCore -->|پروتکل 4| T4[🌐 HTTP Web Daemon GET]:::azure
+    end
+
+    subgraph BORDER_FIREWALL [🚧 گیت‌وی مرزی و فایروال کشوری]
+        T1 & T2 & T3 & T4 --> BorderCheck{بررسی ترافیک ورودی به کشور}:::borderGate
+    end
+
+    BorderCheck -->|ترافیک مسدود / اعمال بلک‌هول| BlockDrop[🔴 قطعی کامل: Timeout / Blackhole / 0/10]:::dropNode
+    BorderCheck -->|پورت باز / اتصال موفق| AllowPass[🟢 اتصال پایدار: دریافت Latency / 10/10]:::iranNet
+
+    subgraph IRAN_INFRASTRUCTURE [🏢 سرورها و دیتاسنترهای مقصد در ایران]
+        AllowPass --> DC1[🏢 دیتاسنتر پارس‌آنلاین / پارس‌پک / آسیاتک]:::iranNet
+        AllowPass --> DC2[☁️ سرورهای ابری و سرور مجازی شخصی]:::iranNet
+        AllowPass --> DC3[📡 دی‌ان‌اس ملی زیرساخت]:::iranNet
+    end
+
+    BlockDrop -.-> SummaryResult[📊 تولید گزارش نهایی]:::edgeCloud
+    DC1 & DC2 & DC3 -.-> SummaryResult
+    SummaryResult -->|ریپلای خودکار در Issue| User
+```
+
+---
+
+### 🕹 نحوه ارسال دستورات در Issues
+
+وارد تب **Issues** مخزن خود شوید و در بخش کامنت دستور را بفرستید:
+
+#### ۱. دستور تست جامع ۴ پروتکل همزمان:
+```text
+/ping parspack.com:443(https,http,tcp,udp),arvancloud.ir:443(https,tcp),217.218.155.155:53(udp,tcp) (تایم)-1
+```
+* **مدت زمان پایش:** با عبارت `(تایم)-1` مدت زمان را از ۱ تا ۵۹ دقیقه تنظیم کنید.
+* **انتخاب پروتکل:** برای هر پورت می‌توانید ترکیبی از `tcp` ،`udp` ،`http` یا `https` را تعیین کنید.
+
+#### ۲. پاکسازی دو مرحله‌ای آرشیو:
+جهت جلوگیری از پر شدن حجم مخزن:
+```text
+پاکسازی
+```
+* بات پاسخ داده و تاییدیه می‌خواهد؛ تا ۶۰ ثانیه فرصت دارید با ارسال **`بله`** تایید یا با **`خیر`** عملیات را متوقف نمایید.
+
+---
+
+### ⚙️ راه‌اندازی سریع روی اکانت شما (راهنمای استفاده اختصاصی)
+
+<div align="center">
+
+[![Fork Immediately](https://img.shields.io/badge/برای_پورت_کردن_کلیک_کنید-Fork_Now-238636?style=for-the-badge&logo=github&logoColor=white)](https://github.com/YoshikVPS/ping/fork)
+
+</div>
+
+1. روی دکمه سبز رنگ بالا کلیک کنید تا مخزن به اکانت شخصی شما فورک شود.
+2. در مخزن فورک‌شده به مسیر **Settings ➔ Actions ➔ General** بروید و در بخش *Workflow permissions* گزینه **Read and write permissions** را انتخاب و ذخیره کنید.
+3. به مسیر **Settings ➔ Secrets and variables ➔ Actions** بروید و سکرت زیر را ثبت کنید:
+   * **Name:** `ADMIN_USERNAME`
+   * **Secret:** نام‌کاربری گیت‌هاب شما (مثلاً: `YoshikVPS`)
+4. وارد تب **Issues** شوید و دستور `/ping` را امتحان کنید!
 
 ---
 
