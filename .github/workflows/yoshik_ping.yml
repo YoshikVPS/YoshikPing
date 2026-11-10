@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: "💬 ارسال پاسخ اولیه به کاربر (در حال آماده‌سازی)"
+      - name: "💬 ارسال پاسخ اولیه به کاربر"
         uses: actions/github-script@v7
         with:
           script: |
@@ -43,16 +43,18 @@ jobs:
         run: |
           python yoshik_ping.py "${{ github.event.comment.body }}"
 
-      - name: "💾 ثبت و آرشیو فایل لاگ در مخزن"
+      - name: "💾 ثبت و آرشیو لاگ در مخزن"
         run: |
           git config --global user.name "Yoshik Bot"
           git config --global user.email "yoshik-bot@noreply.github.com"
           git pull --rebase origin main || true
+          mkdir -p ping
           git add ping/
-          git commit -m "📝 ثبت لاگ تست شبکه: $LOG_FILENAME [skip ci]" || echo "تغییری وجود ندارد"
+          git commit -m "📝 ثبت لاگ تست شبکه: ${LOG_FILENAME:-update} [skip ci]" || echo "تغییری وجود ندارد"
           git push
 
       - name: "📢 ارسال نتیجه نهایی در ایشو"
+        if: always()
         uses: actions/github-script@v7
         with:
           script: |
@@ -67,7 +69,7 @@ jobs:
               });
             }
 
-      - name: "⏳ مکث ۵ دقیقه‌ای پایانی قبل از خروج اکشنز"
+      - name: "⏳ مکث ۵ دقیقه‌ای پایانی"
         run: |
-          echo "🕒 سیستم به مدت ۵ دقیقه بیدار می‌ماند..."
+          echo "🕒 سیستم به مدت ۵ دقیقه جهت بررسی وضعیت فعال می‌ماند..."
           sleep 300
