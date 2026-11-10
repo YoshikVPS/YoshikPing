@@ -9,7 +9,7 @@
 
 [![Engine Status](https://img.shields.io/badge/Engine-Active%20%7C%20Serverless-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://github.com/YoshikVPS/ping/actions)
 [![Language](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![AUP Policy](https://img.shields.io/badge/GitHub%20Policy-100%25%20AUP%20Safe-success?style=for-the-badge&logo=checkmarx&logoColor=white)](#-security--github-policy-compliance)
+[![AUP Policy](https://img.shields.io/badge/GitHub%20Policy-100%25%20AUP%20Safe-success?style=for-the-badge&logo=checkmarx&logoColor=white)](#compliance)
 [![Creator](https://img.shields.io/badge/Architect-YoshikVPS-black?style=for-the-badge&logo=github)](https://github.com/YoshikVPS)
 
 <br/>
@@ -19,11 +19,13 @@
 
 <br/>
 
-**[📖 پرش به مستندات فارسی و سناریوی اینترنت ملی](#-مستندات-جامع-فارسی)** &nbsp; | &nbsp; **[🇬🇧 Jump to English Documentation](#-english-documentation)**
+**<a href="#persian-docs">📖 مطالعه مستندات جامع فارسی و سناریوی اینترنت ملی</a>** &nbsp; | &nbsp; **<a href="#english-docs">🇬🇧 Jump to English Documentation</a>**
 
 </div>
 
 ---
+
+<a id="english-docs"></a>
 
 # 🇬🇧 English Documentation
 
@@ -63,6 +65,8 @@ Yoshik Ping avoids arbitrary port knocking; every probe runs low-overhead native
 
 ---
 
+<a id="compliance"></a>
+
 ### 🛡 Security & GitHub Policy Compliance
 
 > [!NOTE]
@@ -83,6 +87,8 @@ Yoshik Ping avoids arbitrary port knocking; every probe runs low-overhead native
 <br/>
 
 ---
+
+<a id="persian-docs"></a>
 
 # <img src="https://raw.githubusercontent.com/YoshikVPS/ping/main/photo_2026-02-07_07-40-29.jpg" width="30" style="vertical-align: middle; border-radius: 4px;" /> مستندات جامع فارسی | یوشیک پینگ نسخه ۱.۰
 
