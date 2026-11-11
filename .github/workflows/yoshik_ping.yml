@@ -11,11 +11,11 @@ permissions:
 
 jobs:
   # ========================================================
-  # ۱. پردازش پایش عمیق چندپورتی شبکه (/ping)
+  # ۱. پردازش پایش عمیق و اسکنر رنج (/ping و /dns)
   # ========================================================
-  run-deep-ping:
-    name: "🔍 اجرای پایش عمیق شبکه"
-    if: github.event.issue != null && startsWith(github.event.comment.body, '/ping')
+  run-telemetry-engine:
+    name: "🔍 اجرای پایش شبکه و رادار DNS"
+    if: github.event.issue != null && (startsWith(github.event.comment.body, '/ping') || startsWith(github.event.comment.body, '/dns'))
     runs-on: ubuntu-latest
 
     steps:
@@ -37,7 +37,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: "👋 دستور شما دریافت شد مدیر گرامی؛ موتور پایش عمیق Yoshik Ping v3.0 از خارج کشور آغاز گردید... ⏳🔬"
+              body: "👋 دستور شما دریافت شد مدیر گرامی؛ موتور پایش و رادار Yoshik Core v3.0 از خارج کشور آغاز گردید... ⏳🔬"
             });
 
       - name: "📥 دریافت کدهای مخزن"
@@ -52,20 +52,40 @@ jobs:
         run: |
           pip install jdatetime
 
-      - name: "⚙️ پردازش دستور و اجرای پایش"
+      - name: "📥 استخراج و دانلود فایل TXT آپلودشده در کامنت"
+        id: fetch_attachment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commentBody = context.payload.comment.body;
+            // استخراج لینک فایل‌های متنی اتچ‌شده در کامنت گیت‌هاب
+            const fileMatch = commentBody.match(/https:\/\/github\.com\/[^\/]+\/[^\/]+\/files\/\d+\/[^\s\)]+\.txt/i);
+            if (fileMatch) {
+              const fileUrl = fileMatch[0];
+              const fs = require('fs');
+              const https = require('https');
+              const fileStream = fs.createWriteStream("input_ranges.txt");
+              https.get(fileUrl, function(response) {
+                response.pipe(fileStream);
+              });
+              console.log("فایل متنی رنج‌ها با موفقیت دریافت و بارگذاری شد: " + fileUrl);
+            }
+
+      - name: "⚙️ اجرای موتور انتخابی (Ping یا DNS Discovery)"
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
         run: |
           python yoshik_ping.py "${{ github.event.comment.body }}"
 
-      - name: "💾 ذخیره و کامیت لاگ در مخزن"
+      - name: "💾 ذخیره و کامیت آرشیو در مخزن"
         run: |
           git config --global user.name "Yoshik Ping Engine"
           git config --global user.email "ping-engine@users.noreply.github.com"
           git pull --rebase origin main || true
-          mkdir -p ping
-          git add ping/
+          TARGET_DIR="${LOG_FOLDER:-ping}"
+          mkdir -p "$TARGET_DIR"
+          git add "$TARGET_DIR/"
           git commit -m "📝 ثبت لاگ تحلیلی شبکه v3.0: ${LOG_FILENAME:-update} [skip ci]" || echo "بدون تغییر"
           git push
 
@@ -125,8 +145,6 @@ jobs:
           
           display_shamsi = shamsi.strftime("%Y/%m/%d - %H:%M:%S")
           tag_date = now_tehran.strftime("%Y%m%d-%H%M%S")
-          
-          # استخراج هش درختی آخرین وضعیت سورس کدها
           current_tree = subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"]).decode().strip()
           
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
@@ -146,25 +164,19 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo
               });
-              
-              // دریافت اطلاعات تگ آخرین ریلیز
               const tagData = await github.rest.repos.getCommit({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: latestRelease.data.tag_name
               });
-              
               const releaseTree = tagData.data.commit.tree.sha;
-              
               if (currentTree === releaseTree) {
                 core.setOutput("is_duplicate", "true");
                 core.setOutput("release_url", latestRelease.data.html_url);
                 core.setOutput("release_name", latestRelease.data.name);
                 return;
               }
-            } catch (err) {
-              // در صورت نبود هیچ ریلیز قبلی ادامه می‌دهد
-            }
+            } catch (err) {}
             core.setOutput("is_duplicate", "false");
 
       - name: "⚠️ گزارش عدم وجود تغییر به مدیر"
@@ -259,13 +271,11 @@ jobs:
           script: |
             const currentRunId = context.runId;
             let deletedCount = 0;
-            
             const runs = await github.rest.actions.listWorkflowRunsForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
               per_page: 100
             });
-
             for (const run of runs.data.workflow_runs) {
               if (run.id !== currentRunId) {
                 try {
@@ -275,19 +285,15 @@ jobs:
                     run_id: run.id
                   });
                   deletedCount++;
-                } catch (e) {
-                  console.log(`خطا در حذف اجرای شماره ${run.id}: ${e.message}`);
-                }
+                } catch (e) {}
               }
             }
-
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
               body: `🧹 **پاکسازی تب Actions انجام شد.**\nتعداد **${deletedCount}** اجرای قبلی با موفقیت حذف گردید و تاریخچه به طور کامل خلوت شد. ✅`
             });
-
             try {
               await github.rest.actions.deleteWorkflowRun({
                 owner: context.repo.owner,
@@ -297,7 +303,7 @@ jobs:
             } catch (e) {}
 
   # ========================================================
-  # ۴. پاکسازی دو مرحله‌ای پوشه لاگ‌ها (پاکسازی)
+  # ۴. پاکسازی دو مرحله‌ای پوشه‌های لاگ (پاکسازی)
   # ========================================================
   cleanup-storage:
     name: "🧹 پاکسازی آرشیو پوشه لاگ‌ها"
@@ -324,7 +330,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: "⚠️ آیا مطمئن هستید که تمام آرشیو پوشه `ping/` حذف شود؟ ظرف ۱ دقیقه با **«بله»** یا **«خیر»** پاسخ دهید."
+              body: "⚠️ آیا مطمئن هستید که تمام آرشیو پوشه‌های `ping/` و `dns/` حذف شوند؟ ظرف ۱ دقیقه با **«بله»** یا **«خیر»** پاسخ دهید."
             });
             const startTime = Date.now();
             let decision = "TIMEOUT";
@@ -352,16 +358,16 @@ jobs:
         with:
           script: |
             const decision = "${{ steps.prompt_step.outputs.decision }}";
-            let reply = (decision === "YES") ? "✅ پوشه `ping/` با موفقیت پاکسازی شد." : (decision === "NO" ? "🙏 عملیات لغو شد." : "⏰ مهلت به پایان رسید؛ عملیات متوقف شد.");
+            let reply = (decision === "YES") ? "✅ آرشیو لاگ‌ها با موفقیت پاکسازی شد." : (decision === "NO" ? "🙏 عملیات لغو شد." : "⏰ مهلت به پایان رسید؛ عملیات متوقف شد.");
             await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body: reply });
 
-      - name: "🗑 اعمال حذف فیزیکی پوشه"
+      - name: "🗑 اعمال حذف فیزیکی پوشه‌ها"
         if: steps.prompt_step.outputs.decision == 'YES'
         run: |
           git config --global user.name "Yoshik Ping Engine"
           git config --global user.email "ping-engine@users.noreply.github.com"
           git pull --rebase origin main || true
-          rm -rf ping/
+          rm -rf ping/ dns/
           git add -A
-          git commit -m "🧹 پاکسازی پوشه ping توسط مدیر [skip ci]" || echo "پوشه‌ای نبود"
+          git commit -m "🧹 پاکسازی آرشیوهای ping و dns توسط مدیر [skip ci]" || echo "پوشه‌ای نبود"
           git push
