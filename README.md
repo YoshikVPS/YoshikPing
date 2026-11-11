@@ -56,3 +56,117 @@
 
 ```text
 /ping arvancloud.ir:443(https) cloudflare.com:443(https:h3,udp) 1.1.1.1:53(udp) (تایم)-1 @YoshikVPSBOT
+```
+
+#### حالت ۲: ارزیابی تفکیکی نسخه‌های وب با تبدیل خودکار خطا
+
+آزمون همزمان چند پورت و تفکیک لایه‌ها (سیستم به طور خودکار اشتباه نگارشی `http:h3` را به ارتباط امن `https:h3` ارتقا می‌دهد):
+
+```text
+/ping parspack.com:443,80(https:h1,tcp) google.com:443(http:h3,tcp) (تایم)-2
+```
+
+#### حالت ۳: تست سریع و برخط لایه ۴ و پروتکل QUIC (بدون تگ زمان)
+
+اجرای آزمون در مدت زمان پیش‌فرض ۱ دقیقه برای ارزیابی پایداری پورت‌های امن بدون انتشار عمومی:
+
+```text
+/ping 1.1.1.1:53(udp) cloudflare.com:443(https:h3,tcp)
+```
+
+#### حالت ۴: بایگانی هوشمند سورس پروژه و ساخت Release رسمی
+
+بسته‌بندی فایل‌های اصلی سورس در قالب فایل ZIP، ثبت در بخش Releases، جلوگیری هوشمند از ایجاد نسخه تکراری در صورت عدم تغییر سورس، و ارسال اطلاعیه به تلگرام:
+
+```text
+بایگانی-@YoshikVPSBOT
+```
+
+(برای بایگانی بدون ارسال پیام به تلگرام، فقط کلمه `بایگانی` را ارسال کنید).
+
+#### حالت ۵: پاک‌سازی آنی و صفر کردن سوابق تب Actions
+
+تخلیه کامل تاریخچه اجراهای قبلی در تب Actions از طریق API گیت‌هاب جهت حفظ نظم و تمیزی داشبورد مخزن:
+
+```text
+اکشنز-پاک
+```
+
+(برای تخلیه فایل‌های لاگ فیزیکی داخل پوشه `ping/` از کلمه `پاکسازی` استفاده کنید).
+
+---
+
+### <img src="https://raw.githubusercontent.com/YoshikVPS/YoshikPing/main/photo_2026-02-07_07-40-29.jpg" width="22" style="vertical-align: middle;" /> ماتریس فنی تحلیل پروتکل‌ها و سوکت‌ها
+
+| پروتکل         | لایه شبکه | شیوه راستی‌آزمایی سوکت                                       | وضعیت سالم (UP)                                | ماهیت خطا و مسدودی (DOWN)                 |
+| :------------: | :-------: | :----------------------------------------------------------- | :--------------------------------------------- | :---------------------------------------- |
+| **`TCP`**      | لایه ۴    | هندشیک کامل سیستم‌عامل (`SYN ➔ SYN/ACK ➔ ACK`)               | برقراری سوکت زیر ۲.۸ ثانیه                     | بسته بودن پورت / دراپ پکت در فایروال مرزی |
+| **`UDP`**      | لایه ۴    | ارسال پکت تعاملی دیتگرام و تحلیل پاسخ / عدم دریافت خطای پورت | دریافت دیتگرام بازگشتی یا عدم وجود Unreachable | تایم‌اوت سوکت / مسدودی کامل پروتکل UDP    |
+| **`HTTP/1.1`** | لایه ۷    | درخواست وب استاندارد با متد GET به همراه هدر                 | دریافت پاسخ معتبر با کدهای استاندارد           | دراپ اتصال در لبه / خطای سرور             |
+| **`HTTP/2`**   | لایه ۷    | هندشیک TLS 1.3 به همراه مذاکره ALPN پروتکل `h2`              | موفقیت مذاکره مالتی‌پلکسینگ                    | عدم پشتیبانی از H2 / فیلتر هندشیک امن     |
+| **`HTTP/3`**   | لایه ۷    | ارسال پکت اولیه QUIC Initial بر بستر UDP دیتگرام             | دریافت ریسپانس معتبر پروتکل QUIC               | دراپ ترافیک QUIC در فایروال لبه مرزی      |
+
+---
+
+### <img src="https://raw.githubusercontent.com/YoshikVPS/YoshikPing/main/photo_2026-02-07_07-40-29.jpg" width="22" style="vertical-align: middle;" /> آموزش گام‌به‌گام راه‌اندازی روی مخزن شخصی
+
+برای پیاده‌سازی این سیستم روی اکانت گیت‌هاب شخصی خودتان مراحل زیر را طی کنید:
+
+1. **پورت (Fork) کردن مخزن:** روی گزینه Fork در بالای صفحه کلیک کنید تا یک کپی از مخزن در اکانت شما ایجاد شود.
+2. **فعال‌سازی دسترسی‌های ورک‌فلو:** در مخزن شخصی خود وارد مسیر **Settings ➔ Actions ➔ General** شوید. به انتهای صفحه بروید و در بخش **Workflow permissions** گزینه **Read and write permissions** را انتخاب کرده و دکمه **Save** را بزنید.
+3. **ثبت متغیرهای محرمانه (Secrets):** به مسیر **Settings ➔ Secrets and variables ➔ Actions** رفته و با زدن دکمه **New repository secret** متغیرهای زیر را ثبت کنید:
+   - `ADMIN_USERNAME`: نام کاربری گیت‌هاب شما (جهت جلوگیری از اجرای دستورات توسط غریبه‌ها).
+   - `TELEGRAM_BOT_TOKEN`: توکن بات تلگرام دریافت شده از BotFather (اختیاری - جهت ارسال گزارش به کانال).
+   - `TELEGRAM_CHANNEL_ID`: آیدی عمومی یا عددی کانال تلگرام به همراه علامت @ (مثال: `@YoshikVPS`).
+4. **شروع کار:** وارد تب Issues مخزن خود شوید، یک Issue جدید باز کنید یا داخل ایشیو قبلی یکی از دستورات ۵ گانه بالا را ارسال نمایید.
+
+---
+
+### <img src="https://raw.githubusercontent.com/YoshikVPS/YoshikPing/main/photo_2026-02-07_07-40-29.jpg" width="22" style="vertical-align: middle;" /> دسترسی به فایل‌های زیپ، سورس‌ها و نسخه‌ها
+
+تمامی پکیج‌ها و کدهای کامپایل‌شده پروژه به طور مستقیم از طریق گیت‌هاب قابل دریافت هستند:
+
+- 📦 [دانلود مستقیم آخرین فایل زیپ سورس پروژه (Latest ZIP)](https://github.com/YoshikVPS/YoshikPing/releases/latest)
+- 📑 [مشاهده لیست تمام نسخه‌ها، تگ‌ها و لاگ تغییرات (Releases Archive)](https://github.com/YoshikVPS/YoshikPing/releases)
+- 🗂 [پوشه آرشیو لاگ‌های متنی خام در مخزن](https://github.com/YoshikVPS/YoshikPing/tree/main/ping)
+
+---
+
+<a id="english-docs"></a>
+
+# 🇬🇧 English Technical Documentation
+
+An enterprise-grade, serverless cross-border network telemetry sentinel deployed on Microsoft Azure runner infrastructure via GitHub Actions ChatOps. Built to provide precise Layer 4 to Layer 7 diagnostic telemetry, packet reachability validation, ALPN handshakes, and UDP/QUIC availability metrics.
+
+## 🚀 Key Capabilities in Version 3.0
+
+- **Unified Web Matrix:** Native validation for HTTP/1.1, HTTP/2 ALPN negotiation, and HTTP/3 QUIC Initial over UDP.
+- **Telegram NOC Telemetry Integration:** Dispatches structured, engineering-grade NOC performance logs directly to Telegram with link callbacks inside Issues.
+- **Smart Release Archiver (بایگانی):** Self-executing source packaging into GitHub Releases with deduplication mechanics.
+- **Instant Action Cleaner (اکشنز-پاک):** High-speed GitHub Actions history purger via Octokit API.
+
+## 🛡 Security & GitHub Policy Compliance
+
+> [!NOTE]
+> **Notice for GitHub Trust & Safety and Policy Automation:**
+
+- **Zero-Abuse Architecture:** Strictly an authorized uptime telemetry engine. It does NOT conduct mass port scanning or denial-of-service traffic.
+- **Targeted Diagnostics:** Probes are triggered solely against endpoints provided by the authenticated administrator (`ADMIN_USERNAME`).
+- **Rate Limiting:** Enforces strict intervals (`time.sleep 1.8s to 4.0s`) to safeguard runner network cards.
+- **Resource Throttling:** Operates strictly on-demand via comment webhooks and terminates immediately after execution. Fully compliant with GitHub Acceptable Use Policies.
+
+---
+
+```text
+================================================================================
+           📡 YOSHIK VPS NETWORK ENGINEERING & CLOUD TELEMETRY LAB
+================================================================================
+```
+
+| 👨‍💻 System Architect                          | 🌐 Organization             | 🛡 Core License      | ⚡️ Engine Status        |
+| :-------------------------------------------: | :------------------------: | :-----------------: | :---------------------: |
+| [**YoshikVPS**](https://github.com/YoshikVPS) | **Yoshik VPS Network Lab** | **MIT Open Source** | **v3.0 Titanium Ready** |
+
+**Follow [YoshikVPS](https://github.com/YoshikVPS)** • **Star this Repo**
+
+*Engineered with precision • Serverless GitHub Actions Core • Tehran Time Synced*
