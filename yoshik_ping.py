@@ -94,7 +94,7 @@ def probe_http3_quic(host, port):
     start = time.time()
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(2.5)
-    # پکت هندشیک اولیه QUIC Initial جهت اعتبارسنجی لایه ۳ وب
+    # پکت اولیه QUIC Initial برای سنجش پروتکل HTTP/3 بر بستر UDP
     quic_initial_payload = (
         b"\xc0\x00\x00\x00\x01\x08\x01\x02\x03\x04\x05\x06\x07\x08"
         b"\x00\x00\x40\x50" + b"\x00" * 1150
@@ -109,7 +109,6 @@ def probe_http3_quic(host, port):
         except socket.timeout:
             sock.close()
             latency = round((time.time() - start) * 1000, 2)
-            # در صورتی که دیتای بازگشتی دراپ شود ولی مسیر باز باشد
             return False, "عدم پاسخ QUIC Initial (احتمال فیلترینگ UDP/H3)", latency, "TIMEOUT"
     except Exception as e:
         sock.close()
@@ -140,7 +139,6 @@ def probe_udp_raw(host, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(2.2)
     try:
-        # اگر پورت ۵۳ بود پکت DNS می‌فرستد؛ در غیر اینصورت تست دیتگرام تعاملی لایه ۴
         if port == 53:
             payload = b"\xaa\xaa\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\x01\x00\x01"
         else:
@@ -180,7 +178,6 @@ def parse_input_command(raw_text):
     duration_min = max(1, min(duration_min, 59))
     text = re.sub(r"^/ping\s*", "", text, flags=re.IGNORECASE).strip()
 
-    # استخراج تارگت‌ها به همراه مشخصات پروتکل
     item_pattern = re.compile(r"([a-zA-Z0-9\.\_\-]+):([0-9\,]+)(?:\(([^)]+)\))?")
     matches = item_pattern.findall(text)
 
@@ -188,12 +185,10 @@ def parse_input_command(raw_text):
     for host, ports_raw, protos_raw in matches:
         host = host.strip()
         ports = [int(p.strip()) for p in ports_raw.split(",") if p.strip().isdigit()]
-        
         raw_proto_tokens = [p.strip().lower() for p in protos_raw.split(",") if p.strip()] if protos_raw else ["tcp"]
         expanded_tasks = []
 
         for token in raw_proto_tokens:
-            # مدیریت هوشمند اشتباه http:h3 به https:h3
             if token == "http:h3":
                 token = "https:h3"
 
@@ -342,9 +337,9 @@ def main():
     filename = f"ping_{end_shamsi.strftime('%Y-%m-%d_%H-%M-%S')}.txt"
     filepath = os.path.join("ping", filename)
 
-    # ۱. تولید و ذخیره لاگ تمیز در مخزن (فاقد هرگونه لینک تلگرام)
+    # ذخیره فایل آرشیو بدون هیچ لینک اضافی در گیت
     with open(filepath, "w", encoding="utf-8") as f:
-        f.write(f"گزارش عمیق پایش شبکه v3.0 - سرور اختصاصی گیت‌هاب: {runner_ip}\n")
+        f.write(f"گزارش عمیق پایش شبکه v3.0 - سرور اختصاصی رانر: {runner_ip}\n")
         f.write(f"تاریخ: {display_date} | بازه: {start_time_str} تا {end_time_str} ({duration_str})\n")
         f.write("=" * 65 + "\n\n")
 
@@ -360,7 +355,6 @@ def main():
     repo_name = os.getenv("GITHUB_REPOSITORY", "YoshikVPS/YoshikPing")
     raw_file_url = f"https://github.com/{repo_name}/blob/main/{filepath}"
 
-    # ۲. ایجاد متن تلگرام در صورت فعال بودن تگ
     telegram_post_link = None
     if publish_telegram:
         bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -408,7 +402,7 @@ def main():
 
             telegram_post_link = send_telegram_post(bot_token, channel_id, tg_text)
 
-    # ۳. تولید داشبورد ایشیو در گیت‌هاب
+    # ایجاد خروجی کامنت گیت‌هاب
     with open("summary_comment.md", "w", encoding="utf-8") as f:
         f.write("### ⚡️ داشبورد پایش عمیق ترافیک مرزی | **Yoshik Ping v3.0**\n\n")
         f.write(f"> 🖥 **سرور مبدأ (مایکروسافت Azure):** `{runner_ip}`  \n")
