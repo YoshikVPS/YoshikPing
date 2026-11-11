@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/YoshikVPS/ping/main/photo_2026-02-07_07-40-29.jpg" width="220" style="border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);" alt="Yoshik Ping Official Logo" />
+<img src="https://raw.githubusercontent.com/YoshikVPS/ping/main/photo_2026-02-07_07-40-29.jpg" width="220" style="border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);" alt="Yoshik Ping Official Logo" />
 
 <br/><br/>
 
-# 🌐 یوشیک پینگ نسخه ۲.۰ | Yoshik Ping Engine `v2.0`
+# <img src="https://raw.githubusercontent.com/YoshikVPS/ping/main/photo_2026-02-07_07-40-29.jpg" width="38" style="vertical-align: middle; border-radius: 6px;" /> یوشیک پینگ نسخه ۲.۰ &nbsp;|&nbsp; 🇬🇧 Yoshik Ping Engine `v2.0`
 ### سامانه ابری پایش عمیق ترافیک مرزی، پورت‌های موازی و رادار تحریم
 **Serverless Cross-Border Deep Telemetry & Multi-Port Sentinel**
 
@@ -20,7 +20,7 @@
 
 <br/>
 
-**<a href="#persian-docs">📖 مطالعه مستندات جامع فارسی و سناریوی اینترنت ملی</a>** &nbsp; | &nbsp; **<a href="#english-docs">🌐 Switch to English Documentation</a>**
+**<a href="#persian-docs">📖 مطالعه مستندات جامع فارسی و سناریوی اینترنت ملی</a>** &nbsp; | &nbsp; **<a href="#english-docs">🇬🇧 Jump to English Documentation</a>**
 
 </div>
 
@@ -28,7 +28,7 @@
 
 <a id="english-docs"></a>
 
-# 🌐 English Technical Documentation
+# 🇬🇧 English Technical Documentation
 
 An on-demand, non-intrusive network health monitor running on Microsoft Azure runner nodes via GitHub Actions ChatOps. Built to diagnose latency, handshake status, multi-port availability, and cross-border edge reachability without requiring a dedicated external VPS.
 
