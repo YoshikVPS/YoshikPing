@@ -19,13 +19,11 @@ def get_tehran_shamsi():
     return shamsi, now_tehran
 
 def normalize_digits(text: str) -> str:
-    persian_arabic = "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩"
-    english = "01234567890123456789"
-    return text.translate(str.maketrans(persian_arabic, english))
+    tbl = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
+    return text.translate(tbl)
 
 def get_public_ip():
-    services = ["https://api.ipify.org", "https://ifconfig.me/ip", "https://icanhazip.com"]
-    for url in services:
+    for url in ["https://api.ipify.org", "https://ifconfig.me/ip", "https://icanhazip.com"]:
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=3) as resp:
@@ -94,7 +92,7 @@ def test_udp(host, port):
         except socket.timeout:
             sock.close()
             latency = round((time.time() - start) * 1000, 2)
-            return False, "تایم‌اوت UDP (پاسخی نیامد)", latency
+            return False, "تایم‌اوت UDP (بدون پاسخ)", latency
     except Exception as e:
         sock.close()
         latency = round((time.time() - start) * 1000, 2)
@@ -103,66 +101,125 @@ def test_udp(host, port):
 def send_to_rubika(message_text: str):
     bot_token = os.getenv("RUBIKA_BOT_TOKEN")
     channel_id = os.getenv("RUBIKA_CHANNEL_ID")
-    
     if not bot_token or not channel_id:
-        print("⚠️ توکن یا شناسه کانال روبیکا در سکرت‌ها تنظیم نشده است؛ پیام به کانال ارسال نشد.")
         return
-
     url = f"https://botapi.rubika.ir/v3/{bot_token}/sendMessage"
-    payload = {
-        "chat_id": channel_id,
-        "text": message_text
-    }
-    
+    payload = {"chat_id": channel_id, "text": message_text}
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=data,
-        headers={"Content-Type": "application/json"}
-    )
-    
+    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
-            res = response.read().decode("utf-8")
-            print("✅ پیام با موفقیت در کانال روبیکا منتشر شد:", res)
+            pass
     except Exception as e:
-        print("❌ خطا در ارسال پیام به کانال روبیکا:", str(e))
+        print("خطا در ارسال به روبیکا:", e)
+
+def send_rubika_direct(bot_token, chat_id, text):
+    url = f"https://botapi.rubika.ir/v3/{bot_token}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text}
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=8):
+            pass
+    except Exception:
+        pass
+
+def run_rubika_bot_discovery():
+    """شکارچی هوشمند شناسه کانال روبیکا با مکالمه مستقیم /start"""
+    bot_token = os.getenv("RUBIKA_BOT_TOKEN")
+    if not bot_token:
+        with open("summary_comment.md", "w", encoding="utf-8") as f:
+            f.write("⚠️ **خطا:** سکرت `RUBIKA_BOT_TOKEN` تنظیم نشده است.")
+        return
+
+    url = f"https://botapi.rubika.ir/v3/{bot_token}/getUpdates"
+    start_time = time.time()
+    awaiting_user = None
+    discovered_id = None
+    seen_msgs = set()
+
+    while time.time() - start_time < 300: # مهلت ۵ دقیقه
+        try:
+            payload = {"limit": 15}
+            data = json.dumps(payload).encode("utf-8")
+            req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=6) as response:
+                res = json.loads(response.read().decode("utf-8"))
+                updates = res.get("data", {}).get("updates", []) or []
+                for u in updates:
+                    msg = u.get("new_message") or u.get("message") or {}
+                    mid = msg.get("message_id")
+                    uid = msg.get("chat_id")
+                    txt = (msg.get("text") or "").strip()
+
+                    if mid and mid in seen_msgs:
+                        continue
+                    if mid:
+                        seen_msgs.add(mid)
+
+                    if txt == "/start":
+                        awaiting_user = uid
+                        send_rubika_direct(
+                            bot_token, uid,
+                            "👋 سلام مدیر گرامی!\n\n"
+                            "📌 لطفاً همین الان **یک پیام از کانالی که من در آن ادمین هستم** را به این چت فوروارد (هدایت) کنید تا شناسه کانال را شناسایی کنم. ⏳"
+                        )
+                    elif awaiting_user and uid == awaiting_user:
+                        fwd = msg.get("forward_from", {})
+                        fwd_id = str(fwd.get("chat_id", ""))
+                        if fwd_id.startswith("c0"):
+                            discovered_id = fwd_id
+                        elif "forwarded_from" in msg and str(msg["forwarded_from"].get("chat_id", "")).startswith("c0"):
+                            discovered_id = str(msg["forwarded_from"].get("chat_id"))
+                        elif fwd_id:
+                            discovered_id = fwd_id
+
+                        if discovered_id:
+                            send_rubika_direct(
+                                bot_token, uid,
+                                "✅ شناسه کانال شما با موفقیت شناسایی شد!\n\n"
+                                f"📢 شناسه کانال:\n`{discovered_id}`\n\n"
+                                "🛠 این شناسه را در بخش سکرت‌های گیت‌هاب با نام RUBIKA_CHANNEL_ID ذخیره کنید."
+                            )
+                            break
+                        else:
+                            send_rubika_direct(bot_token, uid, "⚠️ پیام فوروارد از کانال نبود! لطفاً یک پست را دقیقاً از داخل کانال فوروارد کنید.")
+                if discovered_id:
+                    break
+        except Exception:
+            pass
+        time.sleep(2)
+
+    with open("summary_comment.md", "w", encoding="utf-8") as f:
+        if discovered_id:
+            f.write(f"🎉 **شناسه کانال روبیکا دریافت و در چت تلگرام/روبیکا ارسال شد!**\n\n- 📢 **شناسه کانال:** `{discovered_id}`\n\n🛠 مقدار بالا را در سکرت `RUBIKA_CHANNEL_ID` ذخیره کنید.")
+        else:
+            f.write("⏰ **مهلت ۵ دقیقه به پایان رسید!** پیامی برای استخراج شناسه دریافت نشد.")
 
 def parse_command(raw_text):
     text = normalize_digits(raw_text)
-    
     send_rubika = False
     duration_min = 1
-    
-    # شناسایی فلگ چسبیده (تایم)-(روبیکا)-عدد
+
     rubika_match = re.search(r"\(تایم\)\s*-\s*\(روبیکا\)\s*-\s*(\d+)", text)
     if rubika_match:
         send_rubika = True
         duration_min = int(rubika_match.group(1))
         text = text[:rubika_match.start()] + text[rubika_match.end():]
     else:
-        # حالت عادی: (تایم)-عدد
         time_match = re.search(r"\(تایم\)\s*-\s*(\d+)", text)
         if time_match:
             duration_min = int(time_match.group(1))
             text = text[:time_match.start()] + text[time_match.end():]
-    
+
     duration_min = max(1, min(duration_min, 59))
     text = re.sub(r"^/ping\s*", "", text, flags=re.IGNORECASE).strip()
 
-    # ضرب دکارتی چند پورتی: host:port1,port2,port3(proto1,proto2)
-    # الگوی تطبیق تارگت‌ها حتی با فاصله
-    item_pattern = re.compile(r"([a-zA-Z0-9\.\_\-]+):([0-9\,]+)(?:\(([^)]+)\))?")
-    matches = item_pattern.findall(text)
-
+    matches = re.findall(r"([a-zA-Z0-9\.\_\-]+):([0-9\,]+)(?:\(([^)]+)\))?", text)
     targets = []
     for host, ports_raw, protos_raw in matches:
         ports = [int(p.strip()) for p in ports_raw.split(",") if p.strip().isdigit()]
-        if protos_raw:
-            protos = [p.strip().lower() for p in protos_raw.split(",") if p.strip().lower() in ["http", "https", "tcp", "udp"]]
-        else:
-            protos = ["tcp"]
-            
+        protos = [p.strip().lower() for p in protos_raw.split(",") if p.strip().lower() in ["http", "https", "tcp", "udp"]] if protos_raw else ["tcp"]
         resolved_ip = resolve_host_ip(host.strip())
         for port in ports:
             targets.append({
@@ -171,15 +228,10 @@ def parse_command(raw_text):
                 "port": port,
                 "protocols": protos
             })
-
     return targets, duration_min, send_rubika
 
 def execute_single_probe(item):
-    host = item["host"]
-    port = item["port"]
-    proto = item["proto"]
-    key = item["key"]
-    
+    host, port, proto, key = item["host"], item["port"], item["proto"], item["key"]
     if proto in ["http", "https"]:
         ok, msg, lat = test_http_https(host, port, proto)
     elif proto == "tcp":
@@ -188,28 +240,20 @@ def execute_single_probe(item):
         ok, msg, lat = test_udp(host, port)
     else:
         ok, msg, lat = False, "پروتکل نامعتبر", 0
-        
     return key, ok, msg, lat
 
-def main():
-    if len(sys.argv) < 2:
-        sys.exit(1)
-
-    raw_command = sys.argv[1]
+def run_ping_engine(raw_command):
     targets, duration_min, send_rubika = parse_command(raw_command)
     os.makedirs("ping", exist_ok=True)
 
     if not targets:
         with open("summary_comment.md", "w", encoding="utf-8") as f:
-            f.write("⚠️ **خطای ورودی:** ساختار دستور شناخته نشد.\n\n"
-                    "نمونه دستور چند پورتی:\n"
-                    "`/ping parspack.com:443,80(https,tcp),217.218.155.155:53(udp,tcp) (تایم)-(روبیکا)-1`")
+            f.write("⚠️ **خطای ورودی:** ساختار دستور شناخته نشد.")
         return
 
     runner_ip = get_public_ip()
     total_seconds = duration_min * 60
-    start_time_monotonic = time.time()
-    
+    start_monotonic = time.time()
     start_shamsi, _ = get_tehran_shamsi()
     start_time_display = start_shamsi.strftime("%H:%M:%S")
 
@@ -219,24 +263,13 @@ def main():
         for proto in t["protocols"]:
             target_key = f"{t['host']}:{t['port']} [{proto.upper()}]"
             summary[target_key] = {
-                "host": t["host"],
-                "ip": t["resolved_ip"],
-                "port": t["port"],
-                "proto": proto.upper(),
-                "success": 0,
-                "fail": 0,
-                "latencies": [],
-                "last_msg": ""
+                "host": t["host"], "ip": t["resolved_ip"], "port": t["port"],
+                "proto": proto.upper(), "success": 0, "fail": 0, "latencies": [], "last_msg": ""
             }
-            probe_queue.append({
-                "host": t["host"],
-                "port": t["port"],
-                "proto": proto,
-                "key": target_key
-            })
+            probe_queue.append({"host": t["host"], "port": t["port"], "proto": proto, "key": target_key})
 
     rounds = 0
-    while (time.time() - start_time_monotonic) < total_seconds:
+    while (time.time() - start_monotonic) < total_seconds:
         rounds += 1
         with ThreadPoolExecutor(max_workers=min(16, len(probe_queue) + 1)) as executor:
             results = list(executor.map(execute_single_probe, probe_queue))
@@ -247,99 +280,73 @@ def main():
                 else:
                     summary[key]["fail"] += 1
                 summary[key]["last_msg"] = msg
-
         time.sleep(max(1.5, min(4.0, len(targets) * 0.4)))
 
-    end_time_monotonic = time.time()
-    elapsed_total_seconds = int(end_time_monotonic - start_time_monotonic)
-    elapsed_minutes = elapsed_total_seconds // 60
-    elapsed_sec = elapsed_total_seconds % 60
-    duration_str = f"{elapsed_minutes} دقیقه و {elapsed_sec} ثانیه" if elapsed_minutes > 0 else f"{elapsed_sec} ثانیه"
-
+    elapsed = int(time.time() - start_monotonic)
+    duration_str = f"{elapsed // 60} دقیقه و {elapsed % 60} ثانیه" if (elapsed // 60) > 0 else f"{elapsed % 60} ثانیه"
     end_shamsi, _ = get_tehran_shamsi()
-    shamsi_timestamp = end_shamsi.strftime("%Y-%m-%d_%H-%M-%S")
-    end_time_display = end_shamsi.strftime("%H:%M:%S")
-    display_date = end_shamsi.strftime("%Y/%m/%d")
-
-    filename = f"ping_{shamsi_timestamp}.txt"
+    filename = f"ping_{end_shamsi.strftime('%Y-%m-%d_%H-%M-%S')}.txt"
     filepath = os.path.join("ping", filename)
+    display_date = end_shamsi.strftime("%Y/%m/%d")
+    end_time_display = end_shamsi.strftime("%H:%M:%S")
 
-    # لاگ متنی اختصاصی
     with open(filepath, "w", encoding="utf-8") as f:
-        f.write("╔══════════════════════════════════════════════════════════════════╗\n")
-        f.write("║       📡 گزارش رسمی پایش شبکه | یوشیک پینگ (نسخه 2.0 چندپورتی)     ║\n")
-        f.write("╚══════════════════════════════════════════════════════════════════╝\n")
-        f.write(f"🌐 آی‌پی سرور مایکروسافت: {runner_ip}\n")
-        f.write(f"📅 تاریخ تست (ایران): {display_date}\n")
-        f.write(f"⏱ زمان شروع: {start_time_display} | زمان پایان: {end_time_display}\n")
-        f.write(f"⏳ مدت زمان ارزیابی: {duration_str} ({rounds} مرحله پایش)\n")
-        f.write("─" * 68 + "\n\n")
-
+        f.write(f"گزارش پایش شبکه - آی‌پی سرور: {runner_ip} | تاریخ: {display_date} | مدت: {duration_str}\n\n")
         for key, data in summary.items():
-            total = data["success"] + data["fail"]
-            avg_lat = round(sum(data["latencies"]) / len(data["latencies"]), 2) if data["latencies"] else 0
-            f.write(f"🎯 هدف: {key}\n")
-            f.write(f"   ├─ آی‌پی شناسایی‌شده: {data['ip']}\n")
-            f.write(f"   ├─ نرخ اتصال: {data['success']}/{total} موفق\n")
-            f.write(f"   ├─ میانگین تاخیر: {avg_lat} ms\n")
-            f.write(f"   └─ آخرین پاسخ: {data['last_msg']}\n\n")
+            tot = data["success"] + data["fail"]
+            avg = round(sum(data["latencies"]) / len(data["latencies"]), 2) if data["latencies"] else 0
+            f.write(f"🎯 {key} -> موفق: {data['success']}/{tot} | میانگین: {avg}ms | پاسخ: {data['last_msg']}\n")
 
     repo_name = os.getenv("GITHUB_REPOSITORY", "")
     raw_file_url = f"https://github.com/{repo_name}/blob/main/{filepath}"
-
-    # کامنت نتیجه در گیت‌هاب
     rubika_badge = "✅ ارسال شد" if send_rubika else "خاموش"
+
     with open("summary_comment.md", "w", encoding="utf-8") as f:
         f.write("### ⚡️ نتیجه ارزیابی دقیق شبکه | **Yoshik Ping v2.0**\n\n")
         f.write(f"> 🖥 **آی‌پی سرور مایکروسافت:** `{runner_ip}`  \n")
         f.write(f"> 📅 **تاریخ ارزیابی (شمسی):** `{display_date}`  \n")
-        f.write(f"> 🕒 **بازه زمانی:** `{start_time_display}` ➔ `{end_time_display}` (به وقت رسمی ایران)  \n")
-        f.write(f"> ⏱ **مدت زمان دقیق:** `{duration_str}` (`{rounds}` مرحله پایش موازی)  \n")
+        f.write(f"> 🕒 **بازه زمانی:** `{start_time_display}` ➔ `{end_time_display}` (به وقت تهران)  \n")
+        f.write(f"> ⏱ **مدت زمان دقیق:** `{duration_str}` (`{rounds}` مرحله پایش)  \n")
         f.write(f"> 📢 **انتشار در کانال روبیکا:** `{rubika_badge}`\n\n")
         f.write("| هدف ارزیابی | آی‌پی مقصد (Resolved IP) | پروتکل | نرخ موفقیت | میانگین Latency | وضعیت پورت |\n")
         f.write("| :--- | :---: | :---: | :---: | :---: | :--- |\n")
-        
         for key, data in summary.items():
-            total = data["success"] + data["fail"]
+            tot = data["success"] + data["fail"]
             avg_lat = f"`{round(sum(data['latencies'])/len(data['latencies']), 2)} ms`" if data["latencies"] else "`ناموفق`"
-            status_badge = "🟢 پایدار" if data["success"] == total else ("🟡 نوسان" if data["success"] > 0 else "🔴 قطع")
-            target_clean = f"`{data['host']}:{data['port']}`"
-            ip_clean = f"`{data['ip']}`"
-            f.write(f"| {target_clean} | {ip_clean} | `{data['proto']}` | `{data['success']}/{total}` | {avg_lat} | {status_badge} ({data['last_msg']}) |\n")
+            status_badge = "🟢 پایدار" if data["success"] == tot else ("🟡 نوسان" if data["success"] > 0 else "🔴 قطع")
+            f.write(f"| `{data['host']}:{data['port']}` | `{data['ip']}` | `{data['proto']}` | `{data['success']}/{tot}` | {avg_lat} | {status_badge} ({data['last_msg']}) |\n")
+        f.write(f"\n📁 **آرشیو لاگ:** [مشاهده فایل ذخیره شده]({raw_file_url})\n")
 
-        f.write(f"\n---\n")
-        f.write(f"📁 **آرشیو اختصاصی لاگ:** [مشاهده فایل گزارش متنی ذخیره شده]({raw_file_url})\n")
-
-    # ارسال پست به روبیکا (در صورت فعال بودن فلگ (روبیکا))
     if send_rubika:
-        rubika_post = []
-        rubika_post.append("📡 رادار پایش ترافیک بین‌الملل به مقصد ایران")
-        rubika_post.append("🌐 سنجش اتصال لبه مرزی از دیتاسنترهای مایکروسافت")
-        rubika_post.append("─────────────────────")
-        rubika_post.append(f"🗓 تاریخ: {display_date}")
-        rubika_post.append(f"🕒 بازه تست: {start_time_display} الی {end_time_display} (به وقت تهران)")
-        rubika_post.append(f"⏱ مدت پایش: {duration_str}")
-        rubika_post.append(f"🖥 آی‌پی نود تست: {runner_ip}")
-        rubika_post.append("\n📊 وضعیت دسترسی و سلامت پورت‌ها:")
-        rubika_post.append("─────────────────────")
-
+        rubika_post = [
+            "📡 رادار پایش ترافیک بین‌الملل به مقصد ایران",
+            "🌐 سنجش اتصال لبه مرزی از دیتاسنترهای مایکروسافت",
+            "─────────────────────",
+            f"🗓 تاریخ: {display_date}",
+            f"🕒 بازه تست: {start_time_display} الی {end_time_display} (به وقت تهران)",
+            f"⏱ مدت پایش: {duration_str}",
+            f"🖥 آی‌پی نود تست: {runner_ip}",
+            "\n📊 وضعیت دسترسی و سلامت پورت‌ها:",
+            "─────────────────────"
+        ]
         for key, data in summary.items():
-            total = data["success"] + data["fail"]
+            tot = data["success"] + data["fail"]
             avg_lat = f"{round(sum(data['latencies'])/len(data['latencies']), 2)}ms" if data["latencies"] else "ناموفق"
-            icon = "🟢" if data["success"] == total else ("🟡" if data["success"] > 0 else "🔴")
-            rubika_post.append(f"{icon} {key}")
-            rubika_post.append(f"   ├ وضعیت: {data['success']}/{total} موفق | تاخیر: {avg_lat}")
-            rubika_post.append(f"   └ پاسخ: {data['last_msg']}")
-
-        rubika_post.append("─────────────────────")
-        rubika_post.append("💡 پایش خودکار با موتور مستقل شبکه")
-        
+            icon = "🟢" if data["success"] == tot else ("🟡" if data["success"] > 0 else "🔴")
+            cmsg = data["last_msg"]
+            if "ssl" in cmsg.lower() or "urlopen error" in cmsg.lower():
+                cmsg = "عدم تطابق SSL/TLS روی پورت"
+            rubika_post.append(f"{icon} {key}\n   ├ وضعیت: {data['success']}/{tot} | تاخیر: {avg_lat}\n   └ پاسخ: {cmsg}")
+        rubika_post.append("─────────────────────\n💡 پایش خودکار با موتور مستقل شبکه")
         send_to_rubika("\n".join(rubika_post))
 
-    env_file_path = os.getenv("GITHUB_ENV")
-    if env_file_path:
-        with open(env_file_path, "a", encoding="utf-8") as env_file:
+    env_path = os.getenv("GITHUB_ENV")
+    if env_path:
+        with open(env_path, "a", encoding="utf-8") as env_file:
             env_file.write(f"LOG_FILENAME={filename}\n")
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1].startswith("/bot"):
+        run_rubika_bot_discovery()
+    elif len(sys.argv) > 1:
+        run_ping_engine(sys.argv[1])
