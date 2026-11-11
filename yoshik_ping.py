@@ -8,7 +8,6 @@ import datetime
 import urllib.request
 import urllib.error
 import ssl
-import ipaddress
 from concurrent.futures import ThreadPoolExecutor
 import jdatetime
 
@@ -159,44 +158,7 @@ def probe_udp_raw(host, port):
         latency = round((time.time() - start) * 1000, 2)
         return False, f"خطای سوکت UDP: {str(e)[:25]}", latency, "FAIL"
 
-# --- کاوشگر تخصصی ولیدیشن DNS برای موتور اسکنر رنج ---
-
-def validate_dns_resolver(ip, port, proto):
-    dns_query = b"\xaa\xbb\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x07example\x03com\x00\x00\x01\x00\x01"
-    start = time.time()
-    if proto == "udp":
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.settimeout(2.5)
-        try:
-            sock.sendto(dns_query, (ip, port))
-            data, _ = sock.recvfrom(512)
-            sock.close()
-            if len(data) >= 12 and data[:2] == b"\xaa\xbb":
-                lat = round((time.time() - start) * 1000, 2)
-                return True, lat
-        except Exception:
-            pass
-        finally:
-            sock.close()
-    elif proto == "tcp":
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(3.0)
-        try:
-            sock.connect((ip, port))
-            length_prefix = len(dns_query).to_bytes(2, byteorder='big')
-            sock.sendall(length_prefix + dns_query)
-            resp = sock.recv(512)
-            sock.close()
-            if len(resp) >= 14 and resp[2:4] == b"\xaa\xbb":
-                lat = round((time.time() - start) * 1000, 2)
-                return True, lat
-        except Exception:
-            pass
-        finally:
-            sock.close()
-    return False, 0
-
-# --- تلگرام API ---
+# --- ارسال گزارش به تلگرام ---
 
 def send_telegram_post(bot_token, channel_id, message_text):
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
@@ -222,11 +184,11 @@ def send_telegram_post(bot_token, channel_id, message_text):
         print(f"Error publishing to Telegram: {e}")
     return None
 
-# ========================================================
-# موتور ۱: پردازش پایش پیشرفته شبکه (/ping)
-# ========================================================
+def main():
+    if len(sys.argv) < 2:
+        sys.exit(1)
 
-def run_ping_engine(raw_text):
+    raw_text = sys.argv[1].strip()
     text = normalize_digits(raw_text)
     publish_telegram = False
     raw_ip_only = False
@@ -328,7 +290,7 @@ def run_ping_engine(raw_text):
     rounds = 0
     safe_workers = min(16, len(flat_tasks) + 1)
 
-    def ping_worker(task):
+    def worker_task(task):
         h, p, pr, tk = task["host"], task["port"], task["proto"], task["target_key"]
         if pr == "https/h1": ok, msg, lat, code = probe_http1(h, p, True)
         elif pr == "http/h1": ok, msg, lat, code = probe_http1(h, p, False)
@@ -342,7 +304,7 @@ def run_ping_engine(raw_text):
     while (time.time() - start_monotonic) < total_seconds:
         rounds += 1
         with ThreadPoolExecutor(max_workers=safe_workers) as executor:
-            results = list(executor.map(ping_worker, flat_tasks))
+            results = list(executor.map(worker_task, flat_tasks))
             for h, tk, ok, msg, lat, code in results:
                 td = hosts_data[h]["ports_map"][tk]
                 if ok:
@@ -363,10 +325,8 @@ def run_ping_engine(raw_text):
     filename = f"ping_{end_shamsi.strftime('%Y-%m-%d_%H-%M-%S')}.txt"
     filepath = os.path.join("ping", filename)
 
-    # تفکیک ساخت فایل بر اساس فلگ -txt
     with open(filepath, "w", encoding="utf-8") as f:
         if raw_ip_only:
-            # فایل خام بدون متن فارسی، صرفاً IPهای پایدار
             written_ips = set()
             for host, hinfo in hosts_data.items():
                 if any(p["success"] > 0 for p in hinfo["ports_map"].values()):
@@ -449,182 +409,6 @@ def run_ping_engine(raw_text):
     if env_path:
         with open(env_path, "a", encoding="utf-8") as env_file:
             env_file.write(f"LOG_FILENAME={filename}\n")
-            env_file.write("LOG_FOLDER=ping\n")
-
-# ========================================================
-# موتور ۲: اسکنر رنج و کشف ریزالورهای فعال (/dns)
-# ========================================================
-
-def run_dns_scanner_engine(raw_text):
-    text = normalize_digits(raw_text)
-    publish_telegram = "@YoshikVPSBOT" in text
-    text = text.replace("@YoshikVPSBOT", "").strip()
-
-    time_match = re.search(r"\(تایم\)\s*-\s*(\d+)", text)
-    duration_min = 10
-    if time_match:
-        duration_min = int(time_match.group(1))
-        text = text[:time_match.start()] + text[time_match.end():]
-    duration_min = max(1, min(duration_min, 59))
-
-    # استخراج پروتکل و پورت از فرمان: /dns (udp,tcp):53 یا /dns (udp):53
-    match_spec = re.search(r"/dns\s*(?:\(([^)]+)\))?(?::(\d+))?", text, re.IGNORECASE)
-    protocols = ["udp"]
-    port = 53
-
-    if match_spec:
-        if match_spec.group(1):
-            protocols = [p.strip().lower() for p in match_spec.group(1).split(",") if p.strip().lower() in ["udp", "tcp"]]
-        if match_spec.group(2):
-            port = int(match_spec.group(2))
-
-    if not protocols:
-        protocols = ["udp"]
-
-    # خواندن فایل‌های ورودی آی‌پی و رنج (از فایل دانلود شده input_ranges.txt)
-    target_ips = []
-    if os.path.exists("input_ranges.txt"):
-        with open("input_ranges.txt", "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                if "/" in line:
-                    try:
-                        net = ipaddress.ip_network(line, strict=False)
-                        for ip in net.hosts():
-                            target_ips.append(str(ip))
-                    except Exception:
-                        pass
-                else:
-                    target_ips.append(line)
-
-    # اگر فایلی آپلود نشده بود، تلاش برای استخراج آی‌پی‌ها یا رنج‌ها از متن دستور
-    if not target_ips:
-        raw_items = re.findall(r"([0-9\.\/]+)", text)
-        for it in raw_items:
-            if "/" in it:
-                try:
-                    for ip in ipaddress.ip_network(it, strict=False).hosts():
-                        target_ips.append(str(ip))
-                except Exception:
-                    pass
-            elif re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", it):
-                target_ips.append(it)
-
-    target_ips = list(dict.fromkeys(target_ips))
-    os.makedirs("dns", exist_ok=True)
-
-    if not target_ips:
-        with open("summary_comment.md", "w", encoding="utf-8") as f:
-            f.write("⚠️ **خطا در موتور اسکنر DNS!** هیچ رنج آی‌پی یا فایل متنی حاوی IP شناسایی نشد.\n\n"
-                    "نحوه اجرا:\n"
-                    "دستور `/dns (udp,tcp):53 (تایم)-10 @YoshikVPSBOT` را ارسال کرده و فایل TXT رنج‌ها را به کامنت پیوست کنید.")
-        return
-
-    runner_ip = get_public_ip()
-    start_shamsi, _ = get_tehran_shamsi()
-    start_time_str = start_shamsi.strftime("%H:%M:%S")
-    start_monotonic = time.time()
-    total_seconds = duration_min * 60
-
-    discovered_resolvers = {}
-    concurrency_pool = min(64, len(target_ips) + 1)
-
-    def scan_task(ip):
-        res = []
-        for proto in protocols:
-            ok, lat = validate_dns_resolver(ip, port, proto)
-            if ok:
-                res.append((proto, lat))
-        return ip, res
-
-    with ThreadPoolExecutor(max_workers=concurrency_pool) as executor:
-        for ip, res_list in executor.map(scan_task, target_ips):
-            if (time.time() - start_monotonic) > total_seconds:
-                break
-            if res_list:
-                discovered_resolvers[ip] = res_list
-
-    elapsed = int(time.time() - start_monotonic)
-    duration_str = f"{elapsed // 60} دقیقه و {elapsed % 60} ثانیه" if (elapsed // 60) > 0 else f"{elapsed % 60} ثانیه"
-    end_shamsi, _ = get_tehran_shamsi()
-    end_time_str = end_shamsi.strftime("%H:%M:%S")
-    display_date = end_shamsi.strftime("%Y/%m/%d")
-
-    filename = f"dns_{end_shamsi.strftime('%Y-%m-%d_%H-%M-%S')}.txt"
-    filepath = os.path.join("dns", filename)
-
-    # ایجاد فایل متنی خالص حاوی فقط IPهای ریزالور معتبر در پوشه dns/
-    with open(filepath, "w", encoding="utf-8") as f:
-        for ip in discovered_resolvers.keys():
-            f.write(f"{ip}\n")
-
-    repo_name = os.getenv("GITHUB_REPOSITORY", "YoshikVPS/YoshikPing")
-    raw_file_url = f"https://github.com/{repo_name}/blob/main/{filepath}"
-
-    telegram_post_link = None
-    if publish_telegram:
-        bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-        channel_id = os.getenv("TELEGRAM_CHANNEL_ID", "@YoshikVPS")
-        if bot_token:
-            tg_text = "🛰 **گزارش رسمی عملیات رادار و کشف ریزالورهای فعال**\n"
-            tg_text += "🚀 سامانه مانیتورینگ: Yoshik DNS Scanner v3.0\n"
-            tg_text += "━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            tg_text += f"🖥 سرور کاوشگر: Azure Cloud Network (فرانسه)\n"
-            tg_text += f"🌐 آی‌پی رانر: `{runner_ip}`\n"
-            tg_text += f"🕒 زمان پایش: `{start_time_str}` ➔ `{end_time_str}` (به وقت تهران)\n"
-            tg_text += f"⏱ مدت عملیات: `{duration_str}`\n"
-            tg_text += f"📡 پورت و پروتکل هدف: `{port} [{','.join(protocols).upper()}]`\n"
-            tg_text += f"🎯 حجم کل آی‌پی‌های بررسی‌شده: `{len(target_ips)}` نشانی\n"
-            tg_text += f"🟢 **تعداد ریزالورهای سالم کشف‌شده:** `{len(discovered_resolvers)}` نشانی\n\n"
-            tg_text += "━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-            tg_text += f"📁 [مشاهده و دریافت لیست خام ریزالورها در مخزن]({raw_file_url})\n"
-            tg_text += f"📢 کانال تخصصی زیرساخت: {channel_id}\n"
-
-            telegram_post_link = send_telegram_post(bot_token, channel_id, tg_text)
-
-    # تولید داشبورد ایشیو
-    with open("summary_comment.md", "w", encoding="utf-8") as f:
-        f.write("### 🛰 داشبورد موتور کشف ریزالورهای دی‌ان‌اس | **Yoshik DNS Discovery v3.0**\n\n")
-        f.write(f"> 🖥 **سرور کاوشگر (Azure):** `{runner_ip}`  \n")
-        f.write(f"> 📅 **تاریخ عملیات:** `{display_date}`  \n")
-        f.write(f"> 🕒 **بازه زمانی:** `{start_time_str}` ➔ `{end_time_str}` (به وقت رسمی تهران)  \n")
-        f.write(f"> ⏱ **مدت اسکن:** `{duration_str}`  \n")
-        f.write(f"> 🎯 **کل اهداف ارزیابی‌شده:** `{len(target_ips)}` | 🟢 **ریزالورهای کشف‌شده:** `{len(discovered_resolvers)}`\n\n")
-        f.write("---\n\n")
-
-        if discovered_resolvers:
-            f.write("| ردیف | نشانی آی‌پی ریزالور | پروتکل پاسخگو | میانگین زمان تاخیر | وضعیت اعتبار سنجی |\n")
-            f.write("| :---: | :--- | :---: | :---: | :--- |\n")
-            for idx, (ip, protos) in enumerate(list(discovered_resolvers.items())[:50], 1):
-                p_names = "+".join([p[0].upper() for p in protos])
-                avg_l = round(sum(p[1] for p in protos) / len(protos), 2)
-                f.write(f"| {idx} | `{ip}` | `{p_names}:{port}` | `{avg_l} ms` | 🟢 پاسخ معتبر به DNS Query |\n")
-            if len(discovered_resolvers) > 50:
-                f.write(f"\n*(نمایش ۵۰ مورد اول از میان {len(discovered_resolvers)} ریزالور کشف‌شده. لیست کامل در فایل لاگ ثبت شد).*\n")
-        else:
-            f.write("🔴 هیچ دی‌ان‌اس ریزالور فعالی در رنج‌های ورودی پاسخگو نبود یا ترافیک در لبه مرزی مسدود گردیده است.\n")
-
-        f.write(f"\n📁 **آرشیو اختصاصی لیست خالص ریزالورها:** [مشاهده فایل در پوشه dns/]({raw_file_url})\n")
-        if telegram_post_link:
-            f.write(f"📢 **انتشار گزارش در تلگرام:** [مشاهده پست در کانال]({telegram_post_link})\n")
-
-    env_path = os.getenv("GITHUB_ENV")
-    if env_path:
-        with open(env_path, "a", encoding="utf-8") as env_file:
-            env_file.write(f"LOG_FILENAME={filename}\n")
-            env_file.write("LOG_FOLDER=dns\n")
-
-def main():
-    if len(sys.argv) < 2:
-        sys.exit(1)
-
-    raw_command = sys.argv[1].strip()
-    if raw_command.lower().startswith("/dns"):
-        run_dns_scanner_engine(raw_command)
-    else:
-        run_ping_engine(raw_command)
 
 if __name__ == "__main__":
     main()
