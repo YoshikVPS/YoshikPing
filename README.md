@@ -13,6 +13,7 @@
 [![Engine Status](https://img.shields.io/badge/Engine-Active%20%7C%20v3.0%20Titanium-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://github.com/YoshikVPS/YoshikPing/actions)
 [![Language](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![QUIC Ready](https://img.shields.io/badge/HTTP%2F3-QUIC%20Enabled-8A2BE2?style=for-the-badge&logo=cloudflare&logoColor=white)](#-ماتریس-فنی-تحلیل-پروتکل‌ها-و-سوکت‌ها)
+[![DNS Scanner](https://img.shields.io/badge/DNS-Range%20Scanner-00A98F?style=for-the-badge&logo=cloudflare&logoColor=white)](#-موتور-جدید-اسکنر-رنج-و-کشف-ریزالورهای-فعال-dns)
 [![Telegram Channel](https://img.shields.io/badge/Telegram-YoshikVPS-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/YoshikVPS)
 [![Releases Archive](https://img.shields.io/badge/Source-Download%20ZIP-2ea44f?style=for-the-badge&logo=github&logoColor=white)](https://github.com/YoshikVPS/YoshikPing/releases)
 
@@ -42,39 +43,46 @@ flowchart TD
     B --> C["☁️ رانر ابری Microsoft Azure<br/>(خارج از کشور)<br/>Yoshik Ping Engine v3.0"]
     C --> D1["🔌 پروب لایه ۴<br/>TCP SYN / UDP Datagram"]
     C --> D2["🌐 ماتریس لایه ۷<br/>HTTP/1.1 · HTTP/2 ALPN · HTTP/3 QUIC"]
+    C --> D3["🛰 موتور رادار DNS<br/>اسکن رنج CIDR / لیست IP<br/>ولیدیشن کوئری واقعی DNS"]
     D1 --> E["🌍 مسیر بین‌المللی<br/>از رانر خارجی ➔ به سمت مرز ایران"]
     D2 --> E
-    E --> F["🎯 مقصد شما<br/>سرور / دامنه / IP / پورت"]
-    F -->|"پاسخ یا تایم‌اوت"| G["📊 تحلیل نتیجه<br/>UP / DOWN / Drop / Timeout"]
+    D3 --> E
+    E --> F["🎯 مقصد شما<br/>سرور / دامنه / IP / پورت / رنج"]
+    F -->|"پاسخ یا تایم‌اوت"| G["📊 تحلیل نتیجه<br/>UP / DOWN / Drop / Timeout<br/>کشف ریزالورهای فعال"]
     G --> H1["💬 کامنت همان Issue<br/>با لینک مستقیم گزارش"]
     G --> H2["📲 کانال تلگرام<br/>گزارش مهندسی NOC"]
+    G --> H3["🗂 آرشیو خام در مخزن<br/>ping/ و dns/"]
     H1 --> I["✅ شما وضعیت واقعی<br/>ترافیک مرزی را می‌بینید"]
     H2 --> I
+    H3 --> I
 
     style A fill:#1f2937,stroke:#60a5fa,stroke-width:2px,color:#fff
     style B fill:#312e81,stroke:#818cf8,stroke-width:2px,color:#fff
     style C fill:#0c4a6e,stroke:#38bdf8,stroke-width:3px,color:#fff
     style D1 fill:#7c2d12,stroke:#fb923c,stroke-width:2px,color:#fff
     style D2 fill:#4c1d95,stroke:#a78bfa,stroke-width:2px,color:#fff
+    style D3 fill:#0f766e,stroke:#2dd4bf,stroke-width:2px,color:#fff
     style E fill:#78350f,stroke:#fbbf24,stroke-width:2px,color:#fff
     style F fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#fff
     style G fill:#1e3a8a,stroke:#60a5fa,stroke-width:2px,color:#fff
     style H1 fill:#134e4a,stroke:#2dd4bf,stroke-width:2px,color:#fff
     style H2 fill:#1e40af,stroke:#3b82f6,stroke-width:2px,color:#fff
+    style H3 fill:#3730a3,stroke:#818cf8,stroke-width:2px,color:#fff
     style I fill:#14532d,stroke:#4ade80,stroke-width:3px,color:#fff
 ```
 
 **به زبان ساده — سناریوی واقعی:**
 
-1. **شما داخل ایران** هستید و می‌خواهید بدانید سرور/دامنه‌تان از بیرون مرز سالم است یا نه.
-2. یک **کامنت ساده** در بخش Issues مخزن می‌نویسید (مثلاً `/ping myserver.com:443(https:h3)`).
+1. **شما داخل ایران** هستید و می‌خواهید بدانید سرور/دامنه/رنج‌تان از بیرون مرز سالم است یا نه.
+2. یک **کامنت ساده** در بخش Issues مخزن می‌نویسید (مثلاً `/ping myserver.com:443(https:h3)` یا `/dns (udp,tcp):53`).
 3. GitHub این کامنت را به عنوان یک **رویداد (Webhook)** دریافت می‌کند و **ورک‌فلو GitHub Actions** را فعال می‌کند.
 4. یک **رانر ابری مایکروسافت Azure** (که فیزیکاً خارج از ایران است) بیدار می‌شود و کد **Yoshik Ping Engine** روی آن اجرا می‌شود.
-5. موتور تست، دو دسته بررسی موازی انجام می‌دهد:
+5. موتور تست، بر اساس نوع دستور، یکی از سه مسیر را طی می‌کند:
    - **لایه ۴:** هندشیک TCP (SYN ➔ SYN/ACK ➔ ACK) و ارسال دیتاگرام UDP.
    - **لایه ۷:** درخواست HTTP/1.1، مذاکره ALPN برای HTTP/2، و ارسال پکت QUIC Initial برای HTTP/3.
+   - **موتور DNS Scanner:** خواندن فایل رنج/لیست IP، ارسال کوئری واقعی DNS روی UDP/TCP، و کشف ریزالورهای فعال.
 6. این بسته‌ها از **رانر خارجی** به سمت **مرز ایران** و سپس **مقصد شما** حرکت می‌کنند. اگر پاسخ برگردد → **UP**، اگر تایم‌اوت شود یا بسته دراپ شود → **DOWN / Drop**.
-7. نتیجه تحلیل‌شده هم در **همان Issue** (به‌صورت کامنت با لینک مستقیم) و هم در **کانال تلگرام** تحویل داده می‌شود.
+7. نتیجه تحلیل‌شده هم در **همان Issue** (به‌صورت کامنت با لینک مستقیم) و هم در **کانال تلگرام** تحویل داده می‌شود و فایل خام در پوشه‌ی `ping/` یا `dns/` مخزن آرشیو می‌شود.
 8. شما از داخل ایران، **وضعیت واقعی ترافیک مرزی** را می‌بینید — بدون اینکه خودتان سرور خارجی داشته باشید.
 
 > 💡 **چرا این روش هوشمندانه است؟** چون GitHub در ایران معمولاً پایدار است، از آن به‌عنوان «پل» استفاده می‌کنیم. شما از داخل، پیام می‌فرستید؛ رانر از خارج، تست می‌زند؛ نتیجه دوباره از همان پل برمی‌گردد.
@@ -88,8 +96,29 @@ flowchart TD
 1. **آیا سرور و دیتاسنتر داخلی هنوز از مرزهای بین‌المللی ترافیک زنده دریافت می‌کند؟**
 2. **آیا کل آی‌پی در لبه ورودی کشور دراپ شده یا تنها پورت‌های وب مسدود هستند؟**
 3. **آیا وب‌سرور روی HTTP/2 و پروتکل مدرن HTTP/3 (QUIC) پاسخگوست یا ارتباط روی پروتکل‌های مدرن دراپ می‌شود؟**
+4. **آیا در یک رنج آی‌پی، ریزالورهای DNS فعال و پاسخگو وجود دارند یا همه در لبه مرزی مسدود شده‌اند؟**
 
-از آنجا که دسترسی به بستر **GitHub** معمولاً پایدار می‌ماند، سامانه **یوشیک پینگ ۳.۰ (Yoshik Ping v3.0)** به صورت بدون سرور (Serverless) بر بستر رانرهای ابری مایکروسافت خارج از کشور اجرا می‌شود. شما از طریق ثبت یک کامنت ساده در بخش Issues مخزن، آزمون‌های همزمان لایه ۴ و ۷ را شلیک کرده و خروجی تحلیلی را در همان صفحه یا در کانال تلگرام تحویل می‌گیرید.
+از آنجا که دسترسی به بستر **GitHub** معمولاً پایدار می‌ماند، سامانه **یوشیک پینگ ۳.۰ (Yoshik Ping v3.0)** به صورت بدون سرور (Serverless) بر بستر رانرهای ابری مایکروسافت خارج از کشور اجرا می‌شود. شما از طریق ثبت یک کامنت ساده در بخش Issues مخزن، آزمون‌های همزمان لایه ۴ و ۷ (و در صورت نیاز اسکن رنج DNS) را شلیک کرده و خروجی تحلیلی را در همان صفحه یا در کانال تلگرام تحویل می‌گیرید.
+
+---
+
+### <img src="https://raw.githubusercontent.com/YoshikVPS/YoshikPing/main/photo_2026-02-07_07-40-29.jpg" width="22" style="vertical-align: middle;" /> موتور جدید: اسکنر رنج و کشف ریزالورهای فعال (`/dns`)
+
+نسخه ۳.۰ علاوه بر موتور پایش `/ping`، یک **موتور اختصاصی اسکن رنج** نیز دارد که برای کشف **ریزالورهای DNS فعال** طراحی شده است:
+
+| قابلیت | توضیح |
+| :--- | :--- |
+| **پشتیبانی از پروتکل** | `udp`، `tcp` یا هر دو به‌صورت همزمان روی پورت دلخواه (پیش‌فرض ۵۳) |
+| **ورودی رنج** | خواندن خودکار فایل متنی آپلودشده در کامنت Issue (شامل CIDR مانند `178.252.0.0/22` یا لیست IP) |
+| **ولیدیشن واقعی** | ارسال کوئری واقعی DNS و تایید بازگشت پکت معتبر (نه فقط باز بودن پورت) |
+| **خروجی خالص** | ذخیره لیست خالص ریزالورهای کشف‌شده در پوشه اختصاصی `dns/` مخزن |
+| **گزارش تلگرام** | ارسال پیام متنی خلاصه‌شده (تعداد ریزالورها، نرخ پایداری، لینک مستقیم فایل آرشیو) بدون پیوست فایل |
+
+**نمونه دستور:**
+```text
+/dns (udp,tcp):53 (تایم)-5 @YoshikVPSBOT
+```
+*(همزمان یک فایل `.txt` حاوی رنج یا لیست IP را داخل همان کامنت Drag & Drop کنید.)*
 
 ---
 
@@ -139,7 +168,15 @@ flowchart TD
 اکشنز-پاک
 ```
 
-(برای تخلیه فایل‌های لاگ فیزیکی داخل پوشه `ping/` از کلمه `پاکسازی` استفاده کنید).
+(برای تخلیه فایل‌های لاگ فیزیکی داخل پوشه‌های `ping/` و `dns/` از کلمه `پاکسازی` استفاده کنید).
+
+#### حالت ۶: خروجی خالص IP با فلگ `-txt`
+
+اگر می‌خواهید فایل گزارش بدون هیچ متن فارسی یا تزیینی، صرفاً شامل لیست خالص IPهایی باشد که سالم و UP بوده‌اند، فلگ `-txt` را به انتهای دستور اضافه کنید:
+
+```text
+/ping 1.1.1.1:53(udp) 8.8.8.8:53(udp) (تایم)-1-txt @YoshikVPSBOT
+```
 
 ---
 
@@ -152,6 +189,7 @@ flowchart TD
 | **`HTTP/1.1`** | لایه ۷    | درخواست وب استاندارد با متد GET به همراه هدر                 | دریافت پاسخ معتبر با کدهای استاندارد           | دراپ اتصال در لبه / خطای سرور             |
 | **`HTTP/2`**   | لایه ۷    | هندشیک TLS 1.3 به همراه مذاکره ALPN پروتکل `h2`              | موفقیت مذاکره مالتی‌پلکسینگ                    | عدم پشتیبانی از H2 / فیلتر هندشیک امن     |
 | **`HTTP/3`**   | لایه ۷    | ارسال پکت اولیه QUIC Initial بر بستر UDP دیتگرام             | دریافت ریسپانس معتبر پروتکل QUIC               | دراپ ترافیک QUIC در فایروال لبه مرزی      |
+| **`DNS/53`**   | لایه ۷    | ارسال کوئری واقعی DNS روی UDP یا TCP و تایید بازگشت پکت      | دریافت پاسخ معتبر با شناسه یکسان              | تایم‌اوت / عدم پاسخ / مسدودی ریزالور      |
 
 > **📌 نکته:** برای تعیین لایه در دستور، از علامت دونقطه (`:`) بعد از نام پروتکل وب استفاده می‌کنی:
 >
@@ -173,7 +211,7 @@ flowchart TD
    - `ADMIN_USERNAME`: نام کاربری گیت‌هاب شما (جهت جلوگیری از اجرای دستورات توسط غریبه‌ها).
    - `TELEGRAM_BOT_TOKEN`: توکن بات تلگرام دریافت شده از BotFather (اختیاری - جهت ارسال گزارش به کانال).
    - `TELEGRAM_CHANNEL_ID`: آیدی عمومی یا عددی کانال تلگرام به همراه علامت @ (مثال: `@YoshikVPS`).
-4. **شروع کار:** وارد تب Issues مخزن خود شوید، یک Issue جدید باز کنید یا داخل ایشیو قبلی یکی از دستورات ۵ گانه بالا را ارسال نمایید.
+4. **شروع کار:** وارد تب Issues مخزن خود شوید، یک Issue جدید باز کنید یا داخل ایشیو قبلی یکی از دستورات ۶ گانه بالا را ارسال نمایید.
 
 ---
 
@@ -184,6 +222,7 @@ flowchart TD
 - 📦 [دانلود مستقیم آخرین فایل زیپ سورس پروژه (Latest ZIP)](https://github.com/YoshikVPS/YoshikPing/releases/latest)
 - 📑 [مشاهده لیست تمام نسخه‌ها، تگ‌ها و لاگ تغییرات (Releases Archive)](https://github.com/YoshikVPS/YoshikPing/releases)
 - 🗂 [پوشه آرشیو لاگ‌های متنی خام در مخزن](https://github.com/YoshikVPS/YoshikPing/tree/main/ping)
+- 🛰 [پوشه آرشیو ریزالورهای کشف‌شده DNS](https://github.com/YoshikVPS/YoshikPing/tree/main/dns)
 
 ---
 
@@ -191,11 +230,13 @@ flowchart TD
 
 # 🇬🇧 English Technical Documentation
 
-An enterprise-grade, serverless cross-border network telemetry sentinel deployed on Microsoft Azure runner infrastructure via GitHub Actions ChatOps. Built to provide precise Layer 4 to Layer 7 diagnostic telemetry, packet reachability validation, ALPN handshakes, and UDP/QUIC availability metrics.
+An enterprise-grade, serverless cross-border network telemetry sentinel deployed on Microsoft Azure runner infrastructure via GitHub Actions ChatOps. Built to provide precise Layer 4 to Layer 7 diagnostic telemetry, packet reachability validation, ALPN handshakes, UDP/QUIC availability metrics, and DNS range discovery.
 
 ## 🚀 Key Capabilities in Version 3.0
 
 - **Unified Web Matrix:** Native validation for HTTP/1.1, HTTP/2 ALPN negotiation, and HTTP/3 QUIC Initial over UDP.
+- **DNS Range Scanner (`/dns`):** Reads CIDR/IP lists from Issue attachments, validates real DNS queries over UDP/TCP, and stores discovered resolvers in a dedicated `dns/` folder.
+- **Raw IP Output (`-txt` flag):** Optional plain-text output containing only healthy/UP IPs, with no Persian text or decoration.
 - **Telegram NOC Telemetry Integration:** Dispatches structured, engineering-grade NOC performance logs directly to Telegram with link callbacks inside Issues.
 - **Smart Release Archiver (بایگانی):** Self-executing source packaging into GitHub Releases with deduplication mechanics.
 - **Instant Action Cleaner (اکشنز-پاک):** High-speed GitHub Actions history purger via Octokit API.
