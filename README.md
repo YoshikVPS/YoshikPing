@@ -1,26 +1,27 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/YoshikVPS/ping/main/photo_2026-02-07_07-40-29.jpg" width="220" style="border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.6);" alt="Yoshik Ping Official Logo" />
+<img src="https://raw.githubusercontent.com/YoshikVPS/YoshikPing/main/photo_2026-02-07_07-40-29.jpg" width="230" style="border-radius: 22px; box-shadow: 0 12px 35px rgba(0,0,0,0.65);" alt="Yoshik Ping Official Logo" />
 
 <br/><br/>
 
-# <img src="https://raw.githubusercontent.com/YoshikVPS/ping/main/photo_2026-02-07_07-40-29.jpg" width="38" style="vertical-align: middle; border-radius: 6px;" /> یوشیک پینگ نسخه ۲.۰ &nbsp;|&nbsp; 🇬🇧 Yoshik Ping Engine `v2.0`
-### سامانه ابری پایش عمیق ترافیک مرزی، پورت‌های موازی و رادار تحریم
-**Serverless Cross-Border Deep Telemetry & Multi-Port Sentinel**
+# <img src="https://raw.githubusercontent.com/YoshikVPS/YoshikPing/main/photo_2026-02-07_07-40-29.jpg" width="36" style="vertical-align: middle; border-radius: 6px;" /> یوشیک پینگ نسخه ۳.۰ &nbsp;|&nbsp; 🇬🇧 Yoshik Ping Engine `v3.0`
+### سامانه ابری پایش عمیق ترافیک مرزی، لایه‌های وب (HTTP/3 QUIC) و رادار تحریم
+**Serverless Cross-Border Deep Telemetry, Web Layer Matrix (H1/H2/H3) & Anti-Filter Sentinel**
 
-[![Engine Status](https://img.shields.io/badge/Engine-Active%20%7C%20v2.0%20Enterprise-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://github.com/YoshikVPS/ping/actions)
+[![Engine Status](https://img.shields.io/badge/Engine-Active%20%7C%20v3.0%20Titanium-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://github.com/YoshikVPS/YoshikPing/actions)
 [![Language](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![QUIC Ready](https://img.shields.io/badge/HTTP%2F3-QUIC%20Enabled-8A2BE2?style=for-the-badge&logo=cloudflare&logoColor=white)](#technical-matrix)
+[![Telegram Alerts](https://img.shields.io/badge/Telegram-Broadcast%20Ready-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/YoshikVPS)
 [![AUP Policy](https://img.shields.io/badge/GitHub%20Policy-100%25%20AUP%20Safe-success?style=for-the-badge&logo=checkmarx&logoColor=white)](#compliance)
-[![Creator](https://img.shields.io/badge/Architect-YoshikVPS-black?style=for-the-badge&logo=github)](https://github.com/YoshikVPS)
 
 <br/>
 
-[![1-Click Fork](https://img.shields.io/badge/⚡️_1--Click_Deploy-Fork_Repository-orange?style=for-the-badge&logo=git&logoColor=white)](https://github.com/YoshikVPS/ping/fork)
-[![Open Issue](https://img.shields.io/badge/💬_ChatOps-Run_Diagnostics-blueviolet?style=for-the-badge&logo=github)](https://github.com/YoshikVPS/ping/issues/new)
+[![1-Click Fork](https://img.shields.io/badge/⚡️_1--Click_Deploy-Fork_Repository-orange?style=for-the-badge&logo=git&logoColor=white)](https://github.com/YoshikVPS/YoshikPing/fork)
+[![Open Issue](https://img.shields.io/badge/💬_ChatOps-Run_Diagnostics-blueviolet?style=for-the-badge&logo=github)](https://github.com/YoshikVPS/YoshikPing/issues/new)
 
 <br/>
 
-**<a href="#persian-docs">📖 مطالعه مستندات جامع فارسی و سناریوی اینترنت ملی</a>** &nbsp; | &nbsp; **<a href="#english-docs">🇬🇧 Jump to English Documentation</a>**
+**<a href="#persian-docs">📖 مطالعه مستندات جامع مهندسی فارسی (سناریوی اینترنت ملی)</a>** &nbsp; | &nbsp; **<a href="#english-docs">🇬🇧 Jump to English Documentation</a>**
 
 </div>
 
@@ -30,95 +31,105 @@
 
 # 🇬🇧 English Technical Documentation
 
-An on-demand, non-intrusive network health monitor running on Microsoft Azure runner nodes via GitHub Actions ChatOps. Built to diagnose latency, handshake status, multi-port availability, and cross-border edge reachability without requiring a dedicated external VPS.
+An enterprise-grade, on-demand network telemetry and censorship detection engine powered by Microsoft Azure runner nodes via GitHub Actions ChatOps. Designed to diagnose real-world connectivity, L4-L7 packet degradation, ALPN handshakes, and UDP/QUIC accessibility into isolated regions without a dedicated server.
 
 ---
 
-### 🚀 Key Features in Version 2.0
+### 🚀 Breakthrough Features in Version 3.0
 
-* **Multi-Port Cartesian Probing:** Audit multiple ports per target concurrently using a comma-separated syntax (`host:443,80,53(protocols)`).
-* **Deep Layer 3 & Layer 4 Inspection:** Differentiates between service inactive state (`Connection Refused`), active firewall drops (`Timeout`), and overall IP Blackholing.
-* **Host-Centric Result Grouping:** Organizes telemetry per endpoint, calculating packet stability percentages and latency averages.
-* **Safe Concurrency Pools:** Employs managed worker threads (capped at 12 workers) with rate-limiting backoffs to ensure full compliance with GitHub Acceptable Use Policies.
+* **Web Protocol Matrix (HTTP/1.1, HTTP/2, HTTP/3 QUIC):** Evaluate modern web protocols natively. Probes QUIC initial packets over UDP alongside TLS 1.3 ALPN negotiations.
+* **Smart Auto-Correction:** Intelligently corrects contradictory syntax (e.g., auto-elevating `http:h3` to encrypted `https:h3`).
+* **Zero-Trace Telegram NOC Dispatch:** Publishes high-density NOC telemetry to Telegram channels (`@YoshikVPS`) while cleanly extracting message IDs back into GitHub Issue comments without polluting repository logs.
+* **Smart Self-Snapshotted Release Engine (`بایگانی`):** Automatically packages core sources into GitHub Releases. Prevents redundant releases if codebase commit hashes remain identical.
+* **Instant Action Cleaner (`اکشنز-پاک`):** One-shot pruning API that flushes past workflow execution history to keep your repository dashboard pristine.
 
 ---
 
-### 🕹 ChatOps Command Syntax
+### 🕹 ChatOps Command Reference (v3.0)
 
-Initiate diagnostics by submitting a comment on any repository **Issue**:
+Submit commands inside repository **Issues**:
 
-#### 1. Multi-Port Inspection Command (v2.0 Syntax)
+#### 1. Advanced Multi-Layer Telemetry
 ```text
-/ping parspack.com:443,80(https,tcp) arvancloud.ir:443(https,tcp) 217.218.155.155:53(udp,tcp) (تایم)-1
-```
-* **Multi-Port Targets:** Group ports per domain: `hostname:port1,port2(protocols)`.
-* **Flexible Delimiters:** Targets can be separated by spaces or commas.
-* **Loop Duration:** `(تایم)-<N>` sets total audit duration in minutes (1 to 59).
+/ping arvancloud.ir:443(https) cloudflare.com:443(https:h3,udp) parspack.com:443,80(https:h1,tcp) (تایم)-2 @YoshikVPSBOT
 
-#### 2. Interactive Archive Purge
-```text
+  - (https): Defaults to concurrently probing all 3 web layers (HTTP/1.1,
+    HTTP/2, HTTP/3).
+  - (https:h3): Exclusively tests HTTP/3 QUIC Initial over UDP.
+  - (تایم)-<N>: Sets duration loop from 1 to 59 minutes.
+  - @YoshikVPSBOT: Triggers Telegram NOC dispatch and captures direct post links
+    into the Issue.
+
+2. Source Code Snapshot & Release
+
+بایگانی-@YoshikVPSBOT
+
+  - Packages source files into a ZIP release, creates a tag, and broadcasts
+    download links to Telegram.
+
+3. Actions History Pruning
+
+اکشنز-پاک
+
+  - Purges previous workflow execution runs through GitHub API to maintain zero
+    clutter.
+
+4. Disk Log Purge
+
 پاکسازی
-```
-* Prompts for confirmation. Reply with `بله` (Yes) within 60 seconds to purge the `/ping/` directory, or `خیر` (No) to abort.
 
----
+  - Interactive 2-step purge of the physical ping/ archive directory.
 
-### 🔬 Technical Inspection Matrix
+🔬 Technical Inspection Matrix
 
-Yoshik Ping avoids arbitrary port knocking; every probe executes lightweight, native socket handshakes:
+| Protocol       | OSI Layer | Socket Verification Method                            | Success State (UP)               | Failure Signature (DOWN)            |
+| :------------: | :-------: | :---------------------------------------------------- | :------------------------------- | :---------------------------------- |
+| **`TCP`**      | L4        | OS Full 3-Way Handshake (`SYN ➔ SYN/ACK ➔ ACK`)       | Established connection `< 2.8s`  | Connection Refused / Dropped        |
+| **`UDP`**      | L4        | Interactive Datagram socket + DNS / Unreachable Probe | Datagram echo or Open Unfiltered | Datagram socket timeout / Filtered  |
+| **`HTTP/1.1`** | L7        | Clear-text or TLS GET Request                         | Status 200-499 processed         | Protocol mismatch / Connection Drop |
+| **`HTTP/2`**   | L7        | TLS 1.3 Handshake + ALPN Negotiation (`h2`)           | ALPN successfully negotiated     | ALPN fallback / SSL Handshake Error |
+| **`HTTP/3`**   | L7/QUIC   | UDP QUIC Initial Packet Injection                     | Active QUIC Handshake return     | Datagram timeout (QUIC blocked)     |
 
-| Protocol | Socket Verification Method | Success State (UP) | Failure Signature (DOWN) |
-| :---: | :--- | :--- | :--- |
-| **`TCP`** | Full OS Socket 3-Way Handshake (`SYN ➔ SYN/ACK ➔ ACK`) | Established connection `< 2.8s` | `Connection Refused` or dropped packet |
-| **`UDP`** | Standard DNS query payload injection with response capture | Active datagram return (`>= 1B`) | Datagram socket timeout |
-| **`HTTPS`** | TLS Handshake + Layer 7 HTTP verification | Valid web response status code | Protocol mismatch or drop |
-| **`HTTP`** | Standard HTTP/1.1 clear-text GET request | Server response processed | Target port closed / inactive |
+🛡 Security & GitHub Policy Compliance
 
----
+[!NOTE] Notice for GitHub Trust & Safety and Policy Automation:
 
-<a id="compliance"></a>
+  - Zero-Abuse Architecture: Strictly an authorized uptime telemetry engine. It
+    does NOT conduct mass port scanning or denial-of-service traffic.
+  - Targeted Diagnostics: Probes are triggered solely against endpoints provided
+    by the authenticated administrator (ADMIN_USERNAME).
+  - Rate Limiting: Enforces strict intervals (time.sleep 1.8s to 4.0s) to
+    safeguard runner network cards.
+  - Resource Throttling: Operates strictly on-demand via comment webhooks and
+    terminates immediately after execution. Fully compliant with GitHub
+    Acceptable Use Policies.
 
-### 🛡 Security & GitHub Policy Compliance
+ مستندات مهندسی فارسی | یوشیک پینگ نسخه ۳.۰
 
-> [!NOTE]
-> **Notice for GitHub Trust & Safety and Policy Automation:**
-> * **Zero-Abuse Architecture:** This repository is strictly a personal uptime checker and latency measurement tool. It does **NOT** conduct mass port scanning, vulnerability probing, or denial-of-service traffic.
-> * **Targeted Diagnostics:** Probes are executed only against explicit endpoints provided by the authenticated repository owner.
-> * **Rate Limiting:** Enforces strict intervals (`time.sleep` between 1.8s and 4.0s per loop) to ensure negligible overhead.
-> * **Resource Throttling:** Runs strictly on-demand via comment events and shuts down promptly. No continuous or aggressive cron jobs are scheduled.
-> * **Policy Status:** Fully compliant with [GitHub Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies).
+ فلسفه مهندسی: دیده‌بان ترافیک در شرایط اختلال اینترنت ملی و مسدودی‌های نوین
 
----
-<br/>
+در سناریوهای بحرانی که دسترسی ترافیک بین‌الملل به داخل کشور محدود شده یا وضعیت
+شبکه به سمت سیاه‌چاله اینترنت ملی (National Intranet Isolation) سوق پیدا می‌کند،
+بزرگ‌ترین دغدغه مهندسین زیرساخت این است:
 
-<div align="center">
-  <h2>═══════════════════════════════════════════════════════</h2>
-</div>
+«آیا ترافیک UDP و QUIC از مرز عبور می‌کند؟ آیا وب‌سرور روی HTTP/2 و HTTP/3
+پاسخگوست یا پروتکل‌های مدرن در لبه مرزی دراپ می‌شوند؟ آیا کل آی‌پی بلک‌هول شده
+یا صرفاً پورت وب فیلتر است؟»
 
-<br/>
+از آنجا که دسترسی به GitHub برای توسعه‌دهندگان حفظ می‌شود، سامانه یوشیک پینگ
+(Yoshik Ping v3.0) با هویت پرچم شیر و خورشید، به عنوان یک رادار برون‌مرزی عمل
+می‌کند:
 
----
+1.  بدون نیاز به سرور واسط یا ابزار تحریم‌شکن، از طریق بخش کامنت Issue دستور
+    /ping ارسال می‌شود.
+2.  نودهای قدرتمند Azure مایکروسافت در خارج کشور بیدار می‌شوند.
+3.  پرتوهای تست همزمان در لایه‌های ۴ و ۷ (TCP, UDP, H1, H2, H3 QUIC) به سمت سرور
+    پرتاب می‌گردد.
+4.  تحلیل مهندسی در همان Issue پاسخ داده شده و در صورت درخواست، به کانال تلگرام
+    نیز ارسال می‌گردد.
 
-<a id="persian-docs"></a>
+ فلوچارت توپولوژی ترافیک مرزی نسخه ۳.۰
 
-# <img src="https://raw.githubusercontent.com/YoshikVPS/ping/main/photo_2026-02-07_07-40-29.jpg" width="34" style="vertical-align: middle; border-radius: 4px;" /> مستندات جامع فارسی | یوشیک پینگ نسخه ۲.۰
-
-### 💡 ایده و فلسفه مهندسی: دیده‌بان ترافیک در شرایط اختلال شبکه و اینترنت ملی
-
-در شرایطی که دسترسی به اینترنت بین‌الملل دچار اختلال شدید می‌شود یا وضعیت شبکه به سمت **سیاه‌چاله ترافیک بین‌الملل (National Intranet Isolation)** پیش می‌رود، یکی از بزرگ‌ترین چالش‌های مدیران سرور و متخصصان شبکه این است:  
-> **«آیا سرور و دیتاسنتر من در داخل کشور، هنوز از خارج از مرزها ترافیک دریافت می‌کند؟ آیا پورت‌ها از بیرون مسدود شده‌اند یا کل آی‌پی در لبه مرزی فیلتر و بلک‌هول شده است؟»**
-
-از آنجا که پلتفرم **GitHub** به عنوان ابزار کاری توسعه‌دهندگان معمولاً در دسترس می‌ماند، **یوشیک پینگ (Yoshik Ping v2.0)** با هویت بومی و با نشان پرچم شیر و خورشید، به عنوان یک رادار خارجی بدون هزینه (Serverless) عمل می‌کند:
-1. شما بدون نیاز به اتصال مستقیم یا ابزارهای دورزدن تحریم، از داخل Issueهای گیت‌هاب دستور `/ping` را ثبت می‌کنید.
-2. سرورهای رانر مایکروسافت (Azure Nodes) در خارج از کشور فعال می‌شوند.
-3. ترافیک پایش عمیق و موازی (چندپورتی) از خارج از مرزها به سمت سرورهای داخل کشور پرتاب می‌شود.
-4. داشبورد تحلیلی هاست‌محور به همراه درصد پایداری و وضعیت سلامت لایه ۳ (مسدودی IP) در همان ایشو برای شما ریپلای خواهد شد.
-
----
-
-### 🧭 فلوچارت ۳ بعدی مسیر ترافیک خارجی به سمت سرورهای داخلی
-
-```mermaid
 flowchart TB
     classDef edgeCloud fill:#1e1e2e,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4;
     classDef azure fill:#003865,stroke:#0078d4,stroke-width:2px,color:#ffffff;
@@ -126,96 +137,93 @@ flowchart TB
     classDef iranNet fill:#14532d,stroke:#22c55e,stroke-width:2px,color:#dcfce7;
     classDef dropNode fill:#7f1d1d,stroke:#ef4444,stroke-width:2px,color:#fee2e2;
 
-    subgraph GLOBAL_PLANE [🌐 ترافیک جهانی / لایه ابری مایکروسافت]
-        User[👤 مدیر سیستم در داخل کشور]:::edgeCloud -->|ارسال کامند ChatOps در Issue| GHIssue[💬 GitHub Issue Webhook]:::edgeCloud
-        GHIssue --> AzureRunner[⚡️ سرورهای رانر Azure مایکروسافت - خارج از کشور]:::azure
+    subgraph GLOBAL_PLANE [🌐 گره‌های ابری خارج از کشور - مایکروسافت Azure]
+        User[👤 مدیر زیرساخت]:::edgeCloud -->|دستور ChatOps در Issue| GHIssue[💬 وب‌هوک Issue گیت‌هاب]:::edgeCloud
+        GHIssue --> AzureRunner[⚡️ رانر لینوکس ابری]:::azure
         
-        AzureRunner --> EngineCore{🔬 موتور آزمون چندرشته‌ای موازی v2.0}:::azure
-        EngineCore -->|پروتکل 1| T1[📡 TCP SYN 3-Way Handshake]:::azure
-        EngineCore -->|پروتکل 2| T2[📦 UDP Datagram Socket Probe]:::azure
-        EngineCore -->|پروتکل 3| T3[🔒 HTTPS/TLS Handshake]:::azure
-        EngineCore -->|پروتکل 4| T4[🌐 HTTP Web Daemon GET]:::azure
+        AzureRunner --> EngineCore{🔬 هسته ارزیابی v3.0}:::azure
+        EngineCore -->|لایه 4| T1[📡 TCP SYN 3-Way Handshake]:::azure
+        EngineCore -->|لایه 4| T2[🔌 سوکت دیتگرام UDP خام]:::azure
+        EngineCore -->|لایه 7| T3[🌐 وب سنتی HTTP/1.1]:::azure
+        EngineCore -->|لایه 7| T4[🔒 مذاکره ALPN در HTTP/2]:::azure
+        EngineCore -->|لایه 7| T5[⚡️ هندشیک QUIC Initial در HTTP/3]:::azure
     end
 
-    subgraph BORDER_FIREWALL [🚧 گیت‌وی مرزی و فایروال کشوری]
-        T1 & T2 & T3 & T4 --> BorderCheck{بررسی ترافیک ورودی به کشور}:::borderGate
+    subgraph BORDER_FIREWALL [🚧 گیت‌وی لبه مرزی و فیلترینگ هوشمند]
+        T1 & T2 & T3 & T4 & T5 --> BorderCheck{تحلیل عمیق بسته / DPI}:::borderGate
     end
 
-    BorderCheck -->|ترافیک مسدود / اعمال بلک‌هول کامل| BlockDrop[🔴 مسدودی کامل آی‌پی: IP Blackhole / Timeout]:::dropNode
-    BorderCheck -->|پورت باز / اتصال موفق| AllowPass[🟢 اتصال پایدار: دریافت Latency / 100%]:::iranNet
+    BorderCheck -->|دراپ پکت / بلک‌هول مرزی| BlockDrop[🔴 مسدودی کامل آی‌پی / IP Blackhole]:::dropNode
+    BorderCheck -->|پورت باز / عبور ترافیک| AllowPass[🟢 اتصال پایدار / ثبت Latency]:::iranNet
 
-    subgraph IRAN_INFRASTRUCTURE [🏢 سرورها و دیتاسنترهای مقصد در ایران]
-        AllowPass --> DC1[🏢 دیتاسنترهای داخلی پارس‌پک / پارس‌آنلاین / آسیاتک]:::iranNet
-        AllowPass --> DC2[☁️ سرورهای لبه و سرور مجازی شخصی]:::iranNet
-        AllowPass --> DC3[📡 دی‌ان‌اس ملی زیرساخت]:::iranNet
+    subgraph IRAN_INFRASTRUCTURE [🏢 زیرساخت مقصد در ایران]
+        AllowPass --> DC1[🏢 دیتاسنترهای داخلی پارس‌پک / آروان / آسیاتک]:::iranNet
+        AllowPass --> DC2[☁️ سرورهای لبه و سرور اختصاصی]:::iranNet
     end
 
-    BlockDrop -.-> SummaryResult[📊 پردازش و ساخت داشبورد هاست‌محور]:::edgeCloud
-    DC1 & DC2 & DC3 -.-> SummaryResult
-    SummaryResult -->|ریپلای زنده و خودکار در Issue| User
-```
+    BlockDrop -.-> ResultReport[📊 تحلیل داده و ساخت گزارش]:::edgeCloud
+    DC1 & DC2 -.-> ResultReport
+    ResultReport -->|پست در کانال تلگرام| TGChan[📢 کانال @YoshikVPS]:::edgeCloud
+    ResultReport -->|ریپلای در کامنت ایشیو| GHIssue
 
----
+ دستورات اجرایی در ایشیو (ChatOps v3.0)
 
-### 🕹 نحوه ارسال دستورات در Issues (نسخه ۲.۰)
+۱. پایش عمیق چندلایه و انتشار در تلگرام
 
-وارد تب **Issues** مخزن خود شوید و در بخش کامنت دستور را بفرستید:
+/ping arvancloud.ir:443(https) cloudflare.com:443(https:h3,udp) parspack.com:443,80(https:h1,tcp) (تایم)-1 @YoshikVPSBOT
 
-#### ۱. دستور تست جامع چندپورتی (قابلیت جدید نسخه ۲.۰):
-```text
-/ping parspack.com:443,80(https,tcp) arvancloud.ir:443(https,tcp) 217.218.155.155:53(udp,tcp) (تایم)-1
-```
-* **تست چند پورت باهم:** برای یک دامنه چندین پورت را با کاما جدا کنید (`parspack.com:443,80,8080(https,tcp)`).
-* **جداسازی با فاصله:** تارگت‌ها را می‌توانید با فاصله ساده از یکدیگر تفکیک کنید.
-* **مدت زمان پایش:** با عبارت `(تایم)-1` مدت زمان را از ۱ تا ۵۹ دقیقه تنظیم کنید.
+  - تست خودکار ۳ لایه: ذکر https به تنهایی هر ۳ نسخه HTTP/1.1، HTTP/2 و HTTP/3
+    را همزمان می‌سنجد.
+  - تست اختصاصی QUIC: عبارت (https:h3) فقط لایه ۳ وب را روی بستر UDP بررسی
+    می‌کند.
+  - انتشار خودکار تلگرام: با افزودن @YoshikVPSBOT گزارش به کانال ارسال شده و
+    لینک پیام در کامنت قرار می‌گیرد.
 
-#### ۲. پاکسازی دو مرحله‌ای آرشیو:
-جهت جلوگیری از پر شدن حجم مخزن:
-```text
+۲. بایگانی و نسخه جدید سورس
+
+بایگانی-@YoshikVPSBOT
+
+  - سورس کامل را در بخش Releases فشرده و منتشر می‌کند. اگر تغییری نکرده باشد،
+    هوشمندانه مانع ایجاد ریلیز تکراری می‌شود.
+
+۳. پاکسازی فوری تب Actions
+
+اکشنز-پاک
+
+  - با یک فرمان، تمامی سوابق و تاریخچه ران‌های قبلی در تب Actions را پاک می‌کند
+    تا پنل همیشه خلوت باشد.
+
+۴. پاکسازی فایل‌های لاگ فیزیکی
+
 پاکسازی
-```
-* بات پاسخ داده و تاییدیه می‌خواهد؛ تا ۶۰ ثانیه فرصت دارید با ارسال **`بله`** تایید یا با **`خیر`** عملیات را متوقف نمایید.
 
----
+  - پوشه لاگ متنی ping/ را با پرسش تاییدیه دو مرحله‌ای (بله/خیر) تخلیه می‌کند.
 
-### ⚙️ راه‌اندازی سریع روی اکانت شما (راهنمای استفاده اختصاصی)
+ راه‌اندازی سریع در ۲ دقیقه
 
-<div align="center">
+Fork Immediately
 
-[![Fork Immediately](https://img.shields.io/badge/برای_پورت_کردن_کلیک_کنید-Fork_Now-238636?style=for-the-badge&logo=github&logoColor=white)](https://github.com/YoshikVPS/ping/fork)
+1.  پروژه را به اکانت خود Fork کنید.
+2.  به مسیر Settings ➔ Actions ➔ General رفته و دسترسی Workflow permissions را
+    روی Read and write permissions ذخیره کنید.
+3.  در مسیر Settings ➔ Secrets and variables ➔ Actions این ۳ مورد را ثبت کنید:
+      - ADMIN_USERNAME: نام کاربری گیت‌هاب شما (مثلاً YoshikVPS)
+      - TELEGRAM_BOT_TOKEN: توکن بات تلگرام (اختیاری جهت ارسال به کانال)
+      - TELEGRAM_CHANNEL_ID: آیدی کانال شما با علامت @ (مثلاً @YoshikVPS)
+4.  وارد تب Issues شوید و دستورات بالا را ارسال کنید!
 
-</div>
-
-1. روی دکمه سبز رنگ بالا کلیک کنید تا مخزن به اکانت شخصی شما فورک شود.
-2. در مخزن فورک‌شده به مسیر **Settings ➔ Actions ➔ General** بروید و در بخش *Workflow permissions* گزینه **Read and write permissions** را انتخاب و ذخیره کنید.
-3. به مسیر **Settings ➔ Secrets and variables ➔ Actions** بروید و سکرت زیر را ثبت کنید:
-   * **Name:** `ADMIN_USERNAME`
-   * **Secret:** نام‌کاربری گیت‌هاب شما (مثلاً: `YoshikVPS`)
-4. وارد تب **Issues** شوید و دستور `/ping` را امتحان کنید!
-
----
-
-<br/>
-
-<div align="center">
-
-```
 ================================================================================
            📡 YOSHIK VPS NETWORK ENGINEERING & CLOUD TELEMETRY LAB
 ================================================================================
-```
 
-| 👨‍💻 System Architect | 🌐 Organization | 🛡 Core License | ⚡️ Engine Status |
-| :---: | :---: | :---: | :---: |
-| [**YoshikVPS**](https://github.com/YoshikVPS) | **Yoshik VPS Network Lab** | **MIT Open Source** | **v2.0 Operational** |
+| 👨‍💻 System Architect                          | 🌐 Organization             | 🛡 Core License      | ⚡️ Engine Status        |
+| :-------------------------------------------: | :------------------------: | :-----------------: | :---------------------: |
+| [**YoshikVPS**](https://github.com/YoshikVPS) | **Yoshik VPS Network Lab** | **MIT Open Source** | **v3.0 Titanium Ready** |
 
-<br/>
+Follow YoshikVPS Star this Repo
 
-[![Follow YoshikVPS](https://img.shields.io/github/followers/YoshikVPS?label=Follow%20Author&style=social)](https://github.com/YoshikVPS)
-[![Star this Repo](https://img.shields.io/github/stars/YoshikVPS/ping?label=Star%20Repository&style=social)](https://github.com/YoshikVPS/ping)
+Engineered with precision • Serverless GitHub Actions Core • Tehran Time Synced
 
-<br/>
-
-<sub>Engineered with precision • Serverless GitHub Actions Core • Tehran Time Synced</sub>
-
-</div>
+این متن کاملاً منطبق بر پروژه، با ظاهری بسیار پیشرفته، پشتیبانی کامل از
+قابلیت‌های نسخه ۳.۰ و تزیین‌شده با آیکون اختصاصی شیر و خورشید برای بخش‌های فارسی
+است. می‌توانید مستقیماً داخل README.md قرار دهید.
