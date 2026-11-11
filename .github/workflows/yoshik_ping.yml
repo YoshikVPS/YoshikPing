@@ -1,4 +1,4 @@
-name: "🚀 سامانه مدیریت و پایش یوشیک پینگ (v1.0)"
+name: "🚀 سامانه مدیریت و پایش یوشیک پینگ (v2.0)"
 
 on:
   issue_comment:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   # ========================================================
-  # ۱. پایش شبکه و تست سرورها
+  # ۱. پردازش تست پینگ و انتشار در روبیکا
   # ========================================================
   run-ping-test:
     name: "🔍 اجرای پایش و اسکن شبکه"
@@ -36,7 +36,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: "👋 دستور شما دریافت شد مدیر گرامی؛ آزمون شبکه آغاز گردید، لطفاً صبور باشید... ⏳🔬"
+              body: "👋 دستور شما دریافت شد مدیر گرامی؛ آزمون موازی شبکه نسخه 2.0 آغاز گردید... ⏳🔬"
             });
 
       - name: "📥 دریافت کدهای مخزن"
@@ -52,6 +52,9 @@ jobs:
           pip install jdatetime
 
       - name: "⚙️ پردازش دستور و پایش شبکه"
+        env:
+          RUBIKA_BOT_TOKEN: ${{ secrets.RUBIKA_BOT_TOKEN }}
+          RUBIKA_CHANNEL_ID: ${{ secrets.RUBIKA_CHANNEL_ID }}
         run: |
           python yoshik_ping.py "${{ github.event.comment.body }}"
 
@@ -62,7 +65,7 @@ jobs:
           git pull --rebase origin main || true
           mkdir -p ping
           git add ping/
-          git commit -m "📝 لاگ ارزیابی خودکار شبکه: ${LOG_FILENAME:-update} [skip ci]" || echo "بدون تغییر"
+          git commit -m "📝 لاگ ارزیابی v2.0: ${LOG_FILENAME:-update} [skip ci]" || echo "بدون تغییر"
           git push
 
       - name: "📢 ارسال نتیجه نهایی در ایشو"
@@ -82,7 +85,67 @@ jobs:
             }
 
   # ========================================================
-  # ۲. فرآیند پاکسازی تعاملی با تاییدیه بله/خیر
+  # ۲. شکارچی و استخراج هوشمند شناسه کانال روبیکا (/bot)
+  # ========================================================
+  rubika-channel-finder:
+    name: "🤖 استخراج شناسه کانال روبیکا"
+    if: github.event.issue != null && startsWith(github.event.comment.body, '/bot')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "🔒 بررسی سطح دسترسی مدیر"
+        env:
+          ADMIN_USER: ${{ secrets.ADMIN_USERNAME }}
+          COMMENT_USER: ${{ github.event.comment.user.login }}
+        run: |
+          if [ -n "$ADMIN_USER" ] && [ "$COMMENT_USER" != "$ADMIN_USER" ]; then
+            echo "❌ خطا: دسترسی غیرمجاز."
+            exit 1
+          fi
+
+      - name: "💬 راهنمای فوری برای مدیر در ایشو"
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: "🛰 **شکارچی شناسه روبیکا فعال شد!**\n\n📌 **اقدام شما:** ظرف **۵ دقیقه آینده**، یک پست از کانال موردنظرتان را به آیدی ربات روبیکا فوروارد کنید (یا ربات را در کانال ادمین کرده و یک پیام بفرستید).\n⏳ ربات منتظر دریافت پیام است..."
+            });
+
+      - name: "📥 دریافت کدها"
+        uses: actions/checkout@v4
+
+      - name: "🐍 پیکربندی پایتون"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: "📡 شنود پکت‌ها و استخراج chat_id"
+        env:
+          RUBIKA_BOT_TOKEN: ${{ secrets.RUBIKA_BOT_TOKEN }}
+        run: |
+          python rubika_bot_helper.py
+
+      - name: "📢 ارسال نتیجه استخراج شناسه در ایشو"
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('bot_discovery.md')) {
+              const body = fs.readFileSync('bot_discovery.md', 'utf8');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+  # ========================================================
+  # ۳. فرآیند پاکسازی تعاملی با تاییدیه بله/خیر
   # ========================================================
   cleanup-storage:
     name: "🧹 پاکسازی آرشیو پوشه لاگ‌ها"
@@ -96,14 +159,13 @@ jobs:
           COMMENT_USER: ${{ github.event.comment.user.login }}
         run: |
           if [ -n "$ADMIN_USER" ] && [ "$COMMENT_USER" != "$ADMIN_USER" ]; then
-            echo "❌ خطا: کاربر $COMMENT_USER مجاز به پاکسازی نیست."
             exit 1
           fi
 
       - name: "📥 دریافت سورس مخزن"
         uses: actions/checkout@v4
 
-      - name: "💬 پرسش تاییدیه از مدیر و انتظار ۱ دقیقه‌ای برای پاسخ"
+      - name: "💬 پرسش تاییدیه از مدیر"
         id: prompt_step
         uses: actions/github-script@v7
         with:
@@ -116,12 +178,10 @@ jobs:
             });
 
             const startTime = Date.now();
-            const timeoutMs = 60 * 1000;
             let userDecision = "TIMEOUT";
 
-            while (Date.now() - startTime < timeoutMs) {
+            while (Date.now() - startTime < 60000) {
               await new Promise(r => setTimeout(r, 4000));
-              
               const comments = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -132,35 +192,22 @@ jobs:
               for (const c of comments.data) {
                 if (c.user.login === context.actor && c.id !== promptComment.data.id) {
                   const txt = c.body.trim();
-                  if (txt === "بله") {
-                    userDecision = "YES";
-                    break;
-                  } else if (txt === "خیر") {
-                    userDecision = "NO";
-                    break;
-                  }
+                  if (txt === "بله") { userDecision = "YES"; break; }
+                  else if (txt === "خیر") { userDecision = "NO"; break; }
                 }
               }
               if (userDecision !== "TIMEOUT") break;
             }
-
             core.setOutput("decision", userDecision);
 
-      - name: "⚙️ پردازش تصمیم مدیر"
+      - name: "⚙️ پردازش تصمیم"
         uses: actions/github-script@v7
         with:
           script: |
             const decision = "${{ steps.prompt_step.outputs.decision }}";
-            let reply = "";
-
-            if (decision === "YES") {
-              reply = "✅ **پوشه `ping/` و تمام آرشیو لاگ‌ها با موفقیت حذف شدند.**\nدر تست بعدی، پوشه به‌صورت خودکار بازسازی خواهد شد.";
-            } else if (decision === "NO") {
-              reply = "🙏 **عملیات پاکسازی با دستور شما لغو شد.** از همراهی شما سپاسگزاریم!";
-            } else {
-              reply = "⏰ **مهلت ۱ دقیقه‌ای شما به پایان رسید مدیر گرامی؛ پاسخی دریافت نشد.** عملیات لغو گردید و هیچ فایلی پاک نشد.";
-            }
-
+            let reply = (decision === "YES") 
+              ? "✅ **پوشه `ping/` با موفقیت حذف شد.**"
+              : (decision === "NO" ? "🙏 عملیات لغو شد." : "⏰ مهلت به پایان رسید؛ عملیات لغو شد.");
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -168,7 +215,7 @@ jobs:
               body: reply
             });
 
-      - name: "🗑 اعمال حذف فیزیکی پوشه از گیت در صورت تایید"
+      - name: "🗑 اعمال حذف فیزیکی پوشه"
         if: steps.prompt_step.outputs.decision == 'YES'
         run: |
           git config --global user.name "Yoshik Ping Engine"
@@ -176,5 +223,5 @@ jobs:
           git pull --rebase origin main || true
           rm -rf ping/
           git add -A
-          git commit -m "🧹 پاکسازی کامل پوشه ping توسط مدیر [skip ci]" || echo "پوشه‌ای برای حذف نبود"
+          git commit -m "🧹 پاکسازی آرشیو ping توسط مدیر [skip ci]" || echo "خالی بود"
           git push
