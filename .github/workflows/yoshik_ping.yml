@@ -152,44 +152,7 @@ jobs:
             }
 
   # ========================================================
-  # ۳. موتور تانل ریورس Xray-core (/x-شروع) - بدون ذخیره لاگ
-  # ========================================================
-  run-xray-reverse:
-    name: "🚇 اجرای تانل ریورس Xray-core"
-    if: github.event.issue != null && startsWith(github.event.comment.body, '/x-شروع')
-    runs-on: ubuntu-latest
-    timeout-minutes: 340
-
-    steps:
-      - name: "🔒 اعتبارسنجی دسترسی مدیر"
-        env:
-          ADMIN_USER: ${{ secrets.ADMIN_USERNAME }}
-          COMMENT_USER: ${{ github.event.comment.user.login }}
-        run: |
-          if [ -n "$ADMIN_USER" ] && [ "$COMMENT_USER" != "$ADMIN_USER" ]; then exit 1; fi
-
-      - name: "📥 دریافت کدهای مخزن"
-        uses: actions/checkout@v4
-
-      - name: "🐍 پیکربندی محیط پایتون"
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: "📦 نصب پیش‌نیازها"
-        run: pip install jdatetime
-
-      - name: "🚀 راه‌اندازی هسته و مدیریت ریورس تا ۵ ساعت"
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
-          COMMENT_USER: ${{ github.event.comment.user.login }}
-        run: |
-          python yoshik_ping.py "${{ github.event.comment.body }}"
-
-  # ========================================================
-  # ۴. موتور هوشمند بایگانی و نسخه جدید (بایگانی)
+  # ۳. موتور هوشمند بایگانی و نسخه جدید (بایگانی)
   # ========================================================
   archive-release:
     name: "📦 مدیریت بایگانی و ساخت Release"
@@ -336,7 +299,7 @@ jobs:
             });
 
   # ========================================================
-  # ۵. پاکسازی سوابق و تاریخچه تب Actions (اکشنز-پاک)
+  # ۴. پاکسازی سوابق و تاریخچه تب Actions (اکشنز-پاک)
   # ========================================================
   cleanup-actions-history:
     name: "🧹 پاکسازی تاریخچه اجراهای اکشنز"
@@ -389,7 +352,7 @@ jobs:
             } catch (e) {}
 
   # ========================================================
-  # ۶. پاکسازی دو مرحله‌ای پوشه لاگ‌ها (پاکسازی)
+  # ۵. پاکسازی دو مرحله‌ای پوشه لاگ‌ها (پاکسازی)
   # ========================================================
   cleanup-storage:
     name: "🧹 پاکسازی آرشیو پوشه‌های لاگ"
