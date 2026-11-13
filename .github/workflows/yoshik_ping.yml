@@ -1,4 +1,4 @@
-name: "🚀 سامانه مدیریت و پایش یوشیک پینگ (v3.0)"
+name: "🚀 سامانه مدیریت و پایش یوشیک پینگ (v4.0)"
 
 on:
   issue_comment:
@@ -37,7 +37,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: "👋 دستور شما دریافت شد مدیر گرامی؛ موتور پایش عمیق Yoshik Ping v3.0 از خارج کشور آغاز گردید... ⏳🔬"
+              body: "👋 دستور شما دریافت شد مدیر گرامی؛ موتور پایش عمیق **Yoshik Ping v4.0** از خارج کشور آغاز گردید... ⏳🔬"
             });
 
       - name: "📥 دریافت کدهای مخزن"
@@ -49,8 +49,7 @@ jobs:
           python-version: '3.10'
 
       - name: "📦 نصب پیش‌نیازها"
-        run: |
-          pip install jdatetime
+        run: pip install jdatetime
 
       - name: "⚙️ پردازش دستور و اجرای پایش"
         env:
@@ -66,7 +65,7 @@ jobs:
           git pull --rebase origin main || true
           mkdir -p ping
           git add ping/
-          git commit -m "📝 ثبت لاگ تحلیلی شبکه v3.0: ${LOG_FILENAME:-update} [skip ci]" || echo "بدون تغییر"
+          git commit -m "📝 ثبت لاگ تحلیلی شبکه v4.0: ${LOG_FILENAME:-update} [skip ci]" || echo "بدون تغییر"
           git push
 
       - name: "📢 ارسال داشبورد تحلیلی در ایشو"
@@ -86,7 +85,111 @@ jobs:
             }
 
   # ========================================================
-  # ۲. موتور هوشمند بایگانی و نسخه جدید (بایگانی)
+  # ۲. موتور تست ریزالور و تانل DNS (/dns)
+  # ========================================================
+  run-dns-scan:
+    name: "🛡 اسکن ریزالور و تانل DNS"
+    if: github.event.issue != null && startsWith(github.event.comment.body, '/dns')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "🔒 اعتبارسنجی دسترسی مدیر"
+        env:
+          ADMIN_USER: ${{ secrets.ADMIN_USERNAME }}
+          COMMENT_USER: ${{ github.event.comment.user.login }}
+        run: |
+          if [ -n "$ADMIN_USER" ] && [ "$COMMENT_USER" != "$ADMIN_USER" ]; then exit 1; fi
+
+      - name: "📥 دریافت کدهای مخزن"
+        uses: actions/checkout@v4
+
+      - name: "🐍 پیکربندی محیط پایتون"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: "📦 نصب پیش‌نیازها"
+        run: pip install jdatetime
+
+      - name: "⏱ تخمین زمان و ارسال ریپلای اولیه"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          python yoshik_ping.py --dns-estimate "${{ github.event.comment.body }}"
+
+      - name: "⚙️ اجرای اسکن موازی ریزالورها"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+        run: |
+          python yoshik_ping.py "${{ github.event.comment.body }}"
+
+      - name: "💾 ذخیره و کامیت فایل ریزالورها در پوشه dns/"
+        run: |
+          git config --global user.name "Yoshik Ping Engine"
+          git config --global user.email "ping-engine@users.noreply.github.com"
+          git pull --rebase origin main || true
+          mkdir -p dns
+          git add dns/
+          git commit -m "🛡 ثبت ریزالورهای سالم DNS v4.0: ${LOG_FILENAME:-update} [skip ci]" || echo "بدون تغییر"
+          git push
+
+      - name: "📢 ارسال گزارش نهایی در ایشو"
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('summary_comment.md')) {
+              const body = fs.readFileSync('summary_comment.md', 'utf8');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+  # ========================================================
+  # ۳. موتور تانل ریورس Xray-core (/x-شروع) - بدون ذخیره لاگ
+  # ========================================================
+  run-xray-reverse:
+    name: "🚇 اجرای تانل ریورس Xray-core"
+    if: github.event.issue != null && startsWith(github.event.comment.body, '/x-شروع')
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+
+    steps:
+      - name: "🔒 اعتبارسنجی دسترسی مدیر"
+        env:
+          ADMIN_USER: ${{ secrets.ADMIN_USERNAME }}
+          COMMENT_USER: ${{ github.event.comment.user.login }}
+        run: |
+          if [ -n "$ADMIN_USER" ] && [ "$COMMENT_USER" != "$ADMIN_USER" ]; then exit 1; fi
+
+      - name: "📥 دریافت کدهای مخزن"
+        uses: actions/checkout@v4
+
+      - name: "🐍 پیکربندی محیط پایتون"
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: "📦 نصب پیش‌نیازها"
+        run: pip install jdatetime
+
+      - name: "🚀 راه‌اندازی هسته و مدیریت ریورس تا ۵ ساعت"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+          COMMENT_USER: ${{ github.event.comment.user.login }}
+        run: |
+          python yoshik_ping.py "${{ github.event.comment.body }}"
+
+  # ========================================================
+  # ۴. موتور هوشمند بایگانی و نسخه جدید (بایگانی)
   # ========================================================
   archive-release:
     name: "📦 مدیریت بایگانی و ساخت Release"
@@ -122,11 +225,9 @@ jobs:
           IRAN_TZ = datetime.timezone(datetime.timedelta(hours=3, minutes=30))
           now_tehran = datetime.datetime.now(datetime.timezone.utc).astimezone(IRAN_TZ)
           shamsi = jdatetime.datetime.fromgregorian(datetime=now_tehran)
-          
           display_shamsi = shamsi.strftime("%Y/%m/%d - %H:%M:%S")
           tag_date = now_tehran.strftime("%Y%m%d-%H%M%S")
           current_tree = subprocess.check_output(["git", "rev-parse", "HEAD^{tree}"]).decode().strip()
-          
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"tehran_time={display_shamsi}\n")
               f.write(f"tag_timestamp={tag_date}\n")
@@ -181,13 +282,11 @@ jobs:
           TEHRAN_TIME: ${{ steps.archive_check.outputs.tehran_time }}
           TAG_TIME: ${{ steps.archive_check.outputs.tag_timestamp }}
         run: |
-          TAG_NAME="v3.0-$TAG_TIME"
-          TITLE="بایگانی خودکار نسخه ۳.۰ (ثبت: $TEHRAN_TIME به وقت تهران)"
+          TAG_NAME="v4.0-$TAG_TIME"
+          TITLE="بایگانی خودکار نسخه ۴.۰ (ثبت: $TEHRAN_TIME به وقت تهران)"
           zip -r "YoshikPing-Source.zip" yoshik_ping.py .github/ README.md photo_2026-02-07_07-40-29.jpg || zip -r "YoshikPing-Source.zip" yoshik_ping.py .github/ README.md
-          
-          NOTES=$(printf "📦 بایگانی سورس رسمی پروژه یوشیک پینگ نسخه ۳.۰\n🕒 زمان ثبت تهران: %s" "$TEHRAN_TIME")
+          NOTES=$(printf "📦 بایگانی سورس رسمی پروژه یوشیک پینگ نسخه ۴.۰\n🕒 زمان ثبت تهران: %s" "$TEHRAN_TIME")
           gh release create "$TAG_NAME" "YoshikPing-Source.zip" --title "$TITLE" --notes "$NOTES"
-          
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "rel_title=$TITLE" >> $GITHUB_OUTPUT
           echo "rel_url=https://github.com/${{ github.repository }}/releases/tag/$TAG_NAME" >> $GITHUB_OUTPUT
@@ -203,11 +302,11 @@ jobs:
           TEHRAN_TIME: ${{ steps.archive_check.outputs.tehran_time }}
         run: |
           if [ -n "$TELEGRAM_BOT_TOKEN" ]; then
-            TEXT=$(printf "🚀 *انتشار و بایگانی رسمی سورس سامانه Yoshik Ping v3.0*\n\n📦 شناسه تگ: \`%s\`\n📅 زمان ثبت رسمی: \`%s\` (تهران)\n🛠 سورس جامع پروژه به همراه اتوماسیون کامل Actions فشرده و ذخیره شد.\n\n🔗 [دریافت مستقیم فایل سورس از گیت‌هاب](%s)\n📢 کانال تخصصی: @YoshikVPS" "$TAG_NAME" "$TEHRAN_TIME" "$REL_URL")
+            TEXT=$(printf "🚀 <b>انتشار و بایگانی رسمی سورس سامانه Yoshik Ping v4.0</b>\n\n📦 <b>شناسه تگ:</b> <code>%s</code>\n📅 <b>زمان ثبت رسمی:</b> <code>%s</code> (تهران)\n🛠 سورس جامع پروژه به همراه اتوماسیون کامل Actions فشرده و ذخیره شد.\n\n🔗 <a href=\"%s\">دریافت مستقیم فایل سورس از گیت‌هاب</a>\n📢 کانال تخصصی: @YoshikVPS" "$TAG_NAME" "$TEHRAN_TIME" "$REL_URL")
             RESP=$(curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
               --data-urlencode "chat_id=$TELEGRAM_CHANNEL_ID" \
               --data-urlencode "text=$TEXT" \
-              -d "parse_mode=Markdown" \
+              -d "parse_mode=HTML" \
               -d "disable_web_page_preview=true")
             MSG_ID=$(echo $RESP | jq -r '.result.message_id // empty')
             if [ -n "$MSG_ID" ]; then
@@ -237,7 +336,7 @@ jobs:
             });
 
   # ========================================================
-  # ۳. پاکسازی سوابق و تاریخچه تب Actions (اکشنز-پاک)
+  # ۵. پاکسازی سوابق و تاریخچه تب Actions (اکشنز-پاک)
   # ========================================================
   cleanup-actions-history:
     name: "🧹 پاکسازی تاریخچه اجراهای اکشنز"
@@ -290,10 +389,10 @@ jobs:
             } catch (e) {}
 
   # ========================================================
-  # ۴. پاکسازی دو مرحله‌ای پوشه لاگ‌ها (پاکسازی)
+  # ۶. پاکسازی دو مرحله‌ای پوشه لاگ‌ها (پاکسازی)
   # ========================================================
   cleanup-storage:
-    name: "🧹 پاکسازی آرشیو پوشه لاگ‌ها"
+    name: "🧹 پاکسازی آرشیو پوشه‌های لاگ"
     if: github.event.issue != null && contains(github.event.comment.body, 'پاکسازی')
     runs-on: ubuntu-latest
 
@@ -317,7 +416,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: "⚠️ آیا مطمئن هستید که تمام آرشیو پوشه `ping/` حذف شود؟ ظرف ۱ دقیقه با **«بله»** یا **«خیر»** پاسخ دهید."
+              body: "⚠️ آیا مطمئن هستید که تمام آرشیو پوشه‌های `ping/` و `dns/` حذف شود؟ ظرف ۱ دقیقه با **«بله»** یا **«خیر»** پاسخ دهید."
             });
             const startTime = Date.now();
             let decision = "TIMEOUT";
@@ -345,16 +444,16 @@ jobs:
         with:
           script: |
             const decision = "${{ steps.prompt_step.outputs.decision }}";
-            let reply = (decision === "YES") ? "✅ پوشه `ping/` با موفقیت پاکسازی شد." : (decision === "NO" ? "🙏 عملیات لغو شد." : "⏰ مهلت به پایان رسید؛ عملیات متوقف شد.");
+            let reply = (decision === "YES") ? "✅ پوشه‌های `ping/` و `dns/` با موفقیت پاکسازی شدند." : (decision === "NO" ? "🙏 عملیات لغو شد." : "⏰ مهلت به پایان رسید؛ عملیات متوقف شد.");
             await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body: reply });
 
-      - name: "🗑 اعمال حذف فیزیکی پوشه"
+      - name: "🗑 اعمال حذف فیزیکی پوشه‌ها"
         if: steps.prompt_step.outputs.decision == 'YES'
         run: |
           git config --global user.name "Yoshik Ping Engine"
           git config --global user.email "ping-engine@users.noreply.github.com"
           git pull --rebase origin main || true
-          rm -rf ping/
+          rm -rf ping/ dns/
           git add -A
-          git commit -m "🧹 پاکسازی پوشه ping توسط مدیر [skip ci]" || echo "پوشه‌ای نبود"
+          git commit -m "🧹 پاکسازی پوشه‌های ping و dns توسط مدیر [skip ci]" || echo "پوشه‌ای نبود"
           git push
