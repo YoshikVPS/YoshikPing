@@ -7,11 +7,7 @@ import html
 import socket
 import struct
 import random
-import shutil
-import zipfile
-import platform
 import datetime
-import subprocess
 import urllib.request
 import urllib.error
 import urllib.parse
@@ -53,39 +49,6 @@ def resolve_host_ip(host: str) -> str:
         return "عدم کشف IP"
 
 
-def get_system_specs() -> dict:
-    specs = {
-        "os": f"{platform.system()} {platform.release()}",
-        "kernel": platform.release(),
-        "cpu_model": platform.processor() or "Unknown CPU",
-        "cpu_cores": os.cpu_count() or 1,
-        "ram_gb": "نامشخص"
-    }
-    try:
-        if os.path.exists("/etc/os-release"):
-            with open("/etc/os-release", "r", encoding="utf-8") as f:
-                for line in f:
-                    if line.startswith("PRETTY_NAME="):
-                        specs["os"] = line.split("=", 1)[1].strip().strip('"')
-                        break
-        if os.path.exists("/proc/cpuinfo"):
-            with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
-                for line in f:
-                    if "model name" in line:
-                        specs["cpu_model"] = line.split(":", 1)[1].strip()
-                        break
-        if os.path.exists("/proc/meminfo"):
-            with open("/proc/meminfo", "r", encoding="utf-8") as f:
-                for line in f:
-                    if line.startswith("MemTotal:"):
-                        kb = int(line.split()[1])
-                        specs["ram_gb"] = f"{round(kb / (1024 * 1024), 2)} GB"
-                        break
-    except Exception:
-        pass
-    return specs
-
-
 # --- ارتباط با GitHub Issue API ---
 
 def gh_api_request(method, endpoint, token, payload=None):
@@ -112,14 +75,6 @@ def post_issue_comment(repo, issue_number, token, body):
     if not (repo and issue_number and token):
         return None
     return gh_api_request("POST", f"/repos/{repo}/issues/{issue_number}/comments", token, {"body": body})
-
-
-def list_issue_comments_since(repo, issue_number, token, since_iso):
-    if not (repo and issue_number and token):
-        return []
-    q = urllib.parse.quote(since_iso)
-    res = gh_api_request("GET", f"/repos/{repo}/issues/{issue_number}/comments?since={q}&per_page=100", token)
-    return res if isinstance(res, list) else []
 
 
 # --- ارسال گزارش به تلگرام (HTML + Expandable Blockquote + SendDocument) ---
@@ -759,273 +714,8 @@ def run_dns_mode(raw_text: str, estimate_only: bool = False):
 
 
 # ==============================================================================
-# ۳. موتور تانل ریورس Xray-core (/x-شروع ، /x-وضعیت ، /x-خاموش)
+# نقطه ورود اصلی
 # ==============================================================================
-
-def parse_xray_uri(uri: str, tag: str) -> tuple:
-    uri = uri.strip()
-    parsed = urllib.parse.urlparse(uri)
-    scheme = parsed.scheme.lower()
-    if scheme not in ("vless", "trojan"):
-        raise ValueError("فقط پروتکل‌های vless و trojan پشتیبانی می‌شوند.")
-
-    user_id = urllib.parse.unquote(parsed.username or "")
-    host = parsed.hostname
-    port = parsed.port or 443
-    params = urllib.parse.parse_qs(parsed.query)
-
-    def qp(k, default=""):
-        return params.get(k, [default])[0]
-
-    net_type = qp("type", "ws").lower()
-    security = qp("security", "tls").lower()
-    sni = qp("sni", host)
-    fp = qp("fp", "chrome")
-    alpn_raw = qp("alpn", "")
-    alpn = [a.strip() for a in alpn_raw.split(",") if a.strip()] if alpn_raw else ["h2", "http/1.1"]
-    ws_host = qp("host", sni or host)
-    path = urllib.parse.unquote(qp("path", "/"))
-
-    stream_settings = {"network": net_type, "security": security}
-    if security == "tls":
-        stream_settings["tlsSettings"] = {
-            "serverName": sni,
-            "fingerprint": fp,
-            "alpn": alpn,
-            "allowInsecure": False
-        }
-    if net_type == "ws":
-        stream_settings["wsSettings"] = {"path": path, "headers": {"Host": ws_host}}
-    elif net_type == "xhttp":
-        stream_settings["xhttpSettings"] = {"path": path, "host": ws_host}
-
-    if scheme == "vless":
-        outbound_settings = {
-            "vnext": [{
-                "address": host,
-                "port": port,
-                "users": [{"id": user_id, "encryption": qp("encryption", "none")}]
-            }]
-        }
-    else:
-        outbound_settings = {
-            "servers": [{
-                "address": host,
-                "port": port,
-                "password": user_id
-            }]
-        }
-
-    config = {
-        "log": {"loglevel": "warning"},
-        "reverse": {
-            "bridges": [{"tag": f"bridge-{tag}", "domain": f"{tag}.reverse.yoshik.internal"}]
-        },
-        "outbounds": [
-            {"tag": "tunnel-out", "protocol": scheme, "settings": outbound_settings, "streamSettings": stream_settings},
-            {"tag": "direct-freedom", "protocol": "freedom", "settings": {}}
-        ],
-        "routing": {
-            "rules": [
-                {"type": "field", "inboundTag": [f"bridge-{tag}"], "domain": [f"full:{tag}.reverse.yoshik.internal"], "outboundTag": "tunnel-out"},
-                {"type": "field", "inboundTag": [f"bridge-{tag}"], "outboundTag": "direct-freedom"}
-            ]
-        }
-    }
-    return config, host, port, scheme, net_type
-
-
-def run_xray_mode(raw_text: str):
-    repo = os.getenv("GITHUB_REPOSITORY")
-    issue_num = os.getenv("ISSUE_NUMBER")
-    gh_token = os.getenv("GITHUB_TOKEN")
-    admin_user = os.getenv("ADMIN_USERNAME") or os.getenv("COMMENT_USER")
-    runner_ip = get_public_ip()
-    specs = get_system_specs()
-
-    m = re.search(r"https?://\S+\.zip", raw_text)
-    if not m:
-        post_issue_comment(repo, issue_num, gh_token, "❌ **خطا:** لینک معتبر فایل `.zip` هسته Xray-core در دستور یافت نشد.")
-        return
-    zip_url = m.group(0)
-
-    xray_dir = "/tmp/yoshik_xray"
-    shutil.rmtree(xray_dir, ignore_errors=True)
-    os.makedirs(xray_dir, exist_ok=True)
-    zip_path = os.path.join(xray_dir, "xray.zip")
-
-    try:
-        req = urllib.request.Request(zip_url, headers={"User-Agent": "YoshikPing/4.0"})
-        with urllib.request.urlopen(req, timeout=60) as resp, open(zip_path, "wb") as out:
-            shutil.copyfileobj(resp, out)
-        with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(xray_dir)
-        xray_bin = os.path.join(xray_dir, "xray")
-        if not os.path.exists(xray_bin):
-            post_issue_comment(repo, issue_num, gh_token, "❌ **خطا:** فایل اجرایی `xray` داخل فایل زیپ پیدا نشد.")
-            return
-        os.chmod(xray_bin, 0o755)
-    except Exception as e:
-        post_issue_comment(repo, issue_num, gh_token, f"❌ **خطا در دانلود یا استخراج هسته Xray:** `{e}`")
-        return
-
-    prompt_msg = (
-        f"✅ **هسته Xray با موفقیت دانلود و نصب شد!**\n\n"
-        f"🌐 **آی‌پی رانر اکشنز:** `{runner_ip}`\n\n"
-        f"📝 **لطفاً کانفیگ ریورس (`vless://` یا `trojan://`) و تگ را در یک کامنت جدید ارسال کنید:**\n"
-        f"```text\n"
-        f"vless://...\n"
-        f"iran\n"
-        f"```\n"
-        f"*(تا ۵ دقیقه منتظر پاسخ شما هستم...)*"
-    )
-    prompt_res = post_issue_comment(repo, issue_num, gh_token, prompt_msg)
-    prompt_id = prompt_res.get("id") if prompt_res else 0
-    since_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
-
-    config_uri, tag = None, "iran"
-    wait_start = time.time()
-    while time.time() - wait_start < 300:
-        time.sleep(4)
-        comments = list_issue_comments_since(repo, issue_num, gh_token, since_iso)
-        for c in comments:
-            if c.get("id") == prompt_id:
-                continue
-            if admin_user and c.get("user", {}).get("login") != admin_user:
-                continue
-            body = c.get("body", "").strip()
-            if "/x-خاموش" in body:
-                post_issue_comment(repo, issue_num, gh_token, "🛑 عملیات راه‌اندازی Xray توسط مدیر لغو شد.")
-                return
-            uri_match = re.search(r"(vless|trojan)://\S+", body, re.IGNORECASE)
-            if uri_match:
-                config_uri = uri_match.group(0)
-                lines = [ln.strip() for ln in body.splitlines() if ln.strip() and not ln.strip().startswith(("vless://", "trojan://"))]
-                if lines:
-                    tag = re.sub(r"[^a-zA-Z0-9_\-]", "", lines[0]) or "iran"
-                break
-        if config_uri:
-            break
-
-    if not config_uri:
-        post_issue_comment(repo, issue_num, gh_token, "⏰ **مهلت ۵ دقیقه‌ای ارسال کانفیگ به پایان رسید.** عملیات متوقف شد.")
-        return
-
-    try:
-        xray_cfg, target_host, target_port, scheme, net_type = parse_xray_uri(config_uri, tag)
-    except Exception as e:
-        post_issue_comment(repo, issue_num, gh_token, f"❌ **خطا در پارس کانفیگ:** `{e}`")
-        return
-
-    target_ip = resolve_host_ip(target_host)
-    cfg_path = os.path.join(xray_dir, "config.json")
-    with open(cfg_path, "w", encoding="utf-8") as f:
-        json.dump(xray_cfg, f, indent=2)
-
-    proc = subprocess.Popen([xray_bin, "run", "-c", cfg_path], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-    time.sleep(2.5)
-    if proc.poll() is not None:
-        err_out = proc.stderr.read().decode("utf-8", errors="ignore")[:400]
-        post_issue_comment(repo, issue_num, gh_token, f"❌ **هسته Xray در شروع به کار متوقف شد:**\n```text\n{err_out}\n```")
-        return
-
-    start_utc = datetime.datetime.now(datetime.timezone.utc)
-    end_utc = start_utc + datetime.timedelta(hours=5)
-    start_shamsi, _ = get_tehran_shamsi(start_utc)
-    end_shamsi, _ = get_tehran_shamsi(end_utc)
-
-    active_msg = (
-        f"🚀 **تانل ریورس Xray با موفقیت فعال شد!**\n\n"
-        f"🔗 **وضعیت اتصال ریورس:** 🟢 متصل و آماده عبور ترافیک (`{scheme.upper()} / {net_type.upper()}`)\n"
-        f"🎯 **سرور مقصد:** `{target_host}` (IP: `{target_ip}` | پورت: `{target_port}`)\n"
-        f"🏷 **تگ اختصاصی:** `{tag}`\n"
-        f"🌐 **آی‌پی رانر اکشنز:** `{runner_ip}`\n\n"
-        f"💻 **مشخصات سیستم‌عامل و منابع رانر:**\n"
-        f"- **سیستم‌عامل:** `{specs['os']}`\n"
-        f"- **کرنل:** `{specs['kernel']}`\n"
-        f"- **پردازنده:** `{specs['cpu_model']}` (`{specs['cpu_cores']}` هسته)\n"
-        f"- **حافظه رم:** `{specs['ram_gb']}`\n\n"
-        f"🕒 **زمان شروع (تهران):** `{start_shamsi.strftime('%Y/%m/%d - %H:%M:%S')}`\n"
-        f"⏳ **حداکثر زمان پایان (۵ ساعت):** `{end_shamsi.strftime('%Y/%m/%d - %H:%M:%S')}`\n\n"
-        f"💡 *برای مشاهده وضعیت لحظه‌ای `/x-وضعیت` و برای توقف دستی `/x-خاموش` را ارسال کنید.*"
-    )
-    post_issue_comment(repo, issue_num, gh_token, active_msg)
-
-    max_duration = 5 * 3600
-    start_mono = time.time()
-    last_check_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    seen_comment_ids = set()
-    restart_count = 0
-    rapid_crashes = []
-    stop_reason = "اتمام سقف ۵ ساعته"
-
-    while (time.time() - start_mono) < max_duration:
-        time.sleep(8)
-
-        # Watchdog: بررسی سلامت هسته و ری‌استارت خودکار در صورت کرش
-        if proc.poll() is not None:
-            now_t = time.time()
-            rapid_crashes = [t for t in rapid_crashes if now_t - t < 30]
-            rapid_crashes.append(now_t)
-            if len(rapid_crashes) >= 5:
-                stop_reason = "کرش مکرر هسته Xray (خطای کانفیگ یا شبکه)"
-                break
-            restart_count += 1
-            proc = subprocess.Popen([xray_bin, "run", "-c", cfg_path], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-            time.sleep(2)
-
-        comments = list_issue_comments_since(repo, issue_num, gh_token, last_check_iso)
-        for c in comments:
-            cid = c.get("id")
-            if cid in seen_comment_ids:
-                continue
-            seen_comment_ids.add(cid)
-            if admin_user and c.get("user", {}).get("login") != admin_user:
-                continue
-            body = c.get("body", "").strip()
-            if "/x-خاموش" in body:
-                stop_reason = "دستور توقف دستی مدیر (`/x-خاموش`)"
-                proc.terminate()
-                break
-            elif "/x-وضعیت" in body:
-                elapsed_s = int(time.time() - start_mono)
-                rem_s = max(0, max_duration - elapsed_s)
-                el_str = f"{elapsed_s // 3600} ساعت و {(elapsed_s % 3600) // 60} دقیقه"
-                rem_str = f"{rem_s // 3600} ساعت و {(rem_s % 3600) // 60} دقیقه"
-                st_badge = "🟢 فعال" if proc.poll() is None else "🟡 در حال بازیابی"
-                st_msg = (
-                    f"📊 **گزارش وضعیت لحظه‌ای Xray Reverse**\n\n"
-                    f"- **وضعیت هسته:** {st_badge}\n"
-                    f"- **آی‌پی رانر اکشنز:** `{runner_ip}`\n"
-                    f"- **زمان سپری‌شده:** `{el_str}`\n"
-                    f"- **زمان باقی‌مانده:** `{rem_str}`\n"
-                    f"- **تعداد ری‌استارت خودکار (Watchdog):** `{restart_count}`"
-                )
-                post_issue_comment(repo, issue_num, gh_token, st_msg)
-        if stop_reason.startswith("دستور"):
-            break
-
-    if proc.poll() is None:
-        proc.terminate()
-        try:
-            proc.wait(timeout=5)
-        except Exception:
-            proc.kill()
-
-    total_used = int(time.time() - start_mono)
-    h_u, rem_u = divmod(total_used, 3600)
-    m_u, s_u = divmod(rem_u, 60)
-    used_str = f"{h_u} ساعت و {m_u} دقیقه و {s_u} ثانیه"
-    stop_shamsi, _ = get_tehran_shamsi()
-
-    post_issue_comment(
-        repo, issue_num, gh_token,
-        f"🛑 **تانل ریورس Xray متوقف شد.**\n\n"
-        f"- **علت توقف:** {stop_reason}\n"
-        f"- **مدت زمان دقیق استفاده:** `{used_str}`\n"
-        f"- **زمان پایان (تهران):** `{stop_shamsi.strftime('%Y/%m/%d - %H:%M:%S')}`"
-    )
-
 
 def main():
     if len(sys.argv) < 2:
@@ -1038,8 +728,6 @@ def main():
     raw_text = sys.argv[1].strip()
     if raw_text.startswith("/dns"):
         run_dns_mode(raw_text, estimate_only=False)
-    elif raw_text.startswith("/x-شروع"):
-        run_xray_mode(raw_text)
     else:
         run_ping_mode(raw_text)
 
