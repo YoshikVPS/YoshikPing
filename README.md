@@ -6,9 +6,9 @@
 
 # <img src="https://raw.githubusercontent.com/YoshikVPS/YoshikPing/main/photo_2026-02-07_07-40-29.jpg" width="36" style="vertical-align: middle; border-radius: 6px;" /> یوشیک پینگ نسخه ۴.۰ &nbsp;|&nbsp; 🇬🇧 Yoshik Ping Engine `v4.0`
 
-### سامانه ابری پایش عمیق ترافیک مرزی، اسکنر ریزالور و تانل DNS، و پل ریورس Xray-core
+### سامانه ابری پایش عمیق ترافیک مرزی، اسکنر ریزالور و تانل DNS، و ماتریس لایه‌های وب
 
-**Serverless Cross-Border Deep Telemetry, DNS Tunnel Sentinel & Dynamic Xray Reverse Bridge**
+**Serverless Cross-Border Deep Telemetry, DNS Tunnel Sentinel & Modern Web Matrix (H1/H2/H3)**
 
 [![Engine Status](https://img.shields.io/badge/Engine-Active%20%7C%20v4.0%20Quantum-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)](https://github.com/YoshikVPS/YoshikPing/actions)
 [![Language](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
@@ -42,16 +42,14 @@ flowchart TD
     B --> C["☁️ رانر ابری Microsoft Azure<br/>(خارج از کشور)<br/>Yoshik Ping Engine v4.0"]
     C --> D1["🔌 موتور /ping تا ۱۰۰۰ تارگت<br/>TCP - UDP - H1 - H2 - H3 QUIC"]
     C --> D2["🛡 موتور /dns اسکنر ریزالور<br/>تست پورت ۵۳ + عبور پکت تانل"]
-    C --> D3["🚇 موتور /x-شروع Xray Reverse<br/>تانل ریورس ۵ ساعته + Watchdog"]
     D1 --> E["🌍 مسیر بین‌المللی<br/>از رانر خارجی به سمت مرز ایران"]
     D2 --> E
-    D3 --> E
-    E --> F["🎯 مقصد شما<br/>سرور - دامنه - ریزالور - پنل"]
+    E --> F["🎯 مقصد شما<br/>سرور - دامنه - ریزالور - پورت"]
     F -->|"پاسخ یا تایم‌اوت"| G["📊 تحلیل و خروجی<br/>UP / DOWN / Tunnel Ready"]
     G --> H1["💬 کامنت همان Issue<br/>با لینک مستقیم و مشخصات"]
     G --> H2["📲 کانال تلگرام<br/>کادر بازشونده + فایل پیوست"]
     G --> H3["🗂 آرشیو در مخزن<br/>پوشه‌های ping و dns"]
-    H1 --> I["✅ مدیریت کامل ترافیک مرزی<br/>بدون نیاز به سرور خارجی"]
+    H1 --> I["✅ پایش کامل ترافیک مرزی<br/>بدون نیاز به سرور خارجی"]
     H2 --> I
     H3 --> I
 
@@ -60,7 +58,6 @@ flowchart TD
     style C fill:#0c4a6e,stroke:#38bdf8,stroke-width:3px,color:#fff
     style D1 fill:#7c2d12,stroke:#fb923c,stroke-width:2px,color:#fff
     style D2 fill:#065f46,stroke:#34d399,stroke-width:2px,color:#fff
-    style D3 fill:#4c1d95,stroke:#a78bfa,stroke-width:2px,color:#fff
     style E fill:#78350f,stroke:#fbbf24,stroke-width:2px,color:#fff
     style F fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#fff
     style G fill:#1e3a8a,stroke:#60a5fa,stroke-width:2px,color:#fff
@@ -81,11 +78,7 @@ flowchart TD
 2. **ارتقای موتور `/ping` به مقیاس ۱۰۰۰ تارگت:**
    - بهینه‌سازی همزمانی برای تست روان تا ۱۰۰۰ دامنه و آی‌پی همزمان.
    - استفاده از **نقل‌قول بازشونده تلگرام (`Expandable Blockquote`)** برای نمایش تمیز گزارش‌های طولانی و ارسال خودکار فایل `.txt` در صورت عبور از سقف ۴۰۹۶ کاراکتر.
-3. **موتور تانل ریورس Xray-core (`/x-شروع`، `/x-وضعیت`، `/x-خاموش`):**
-   - دانلود و نصب داینامیک هر نسخه دلخواه از مخزن رسمی `XTLS/Xray-core`.
-   - دریافت فرم کانفیگ (`vless://` و `trojan://` با ترنسپورت `ws` و `xhttp`) و تگ در Issue.
-   - اجرای پایدار تا **۵ ساعت** همراه با **Watchdog خودکار** (ری‌استارت فوری در صورت کرش هسته).
-   - نمایش IP رانر، IP سرور مقصد، مشخصات کامل سخت‌افزاری (OS، کرنل، CPU، RAM) و زمان دقیق شروع/پایان به وقت تهران (بدون ذخیره هیچ لاگی در مخزن).
+   - نمایش ثابت IP عمومی رانر اکشنز در خروجی هر دو موتور.
 
 ---
 
@@ -113,18 +106,7 @@ flowchart TD
 
 *(اگر `@YoshikVPSBOT` را نگذارید، اسکن انجام و در مخزن ذخیره می‌شود اما در کانال منتشر نمی‌شود).*
 
-#### حالت ۳: راه‌اندازی تانل ریورس Xray-core (`/x-شروع`)
-
-نصب نسخه دلخواه Xray-core، دریافت کانفیگ ریورس در Issue و اجرا تا ۵ ساعت:
-
-```text
-/x-شروع https://github.com/XTLS/Xray-core/releases/download/v26.10.31/Xray-linux-64.zip
-```
-
-- برای مشاهده وضعیت لحظه‌ای، زمان باقی‌مانده و تعداد ری‌استارت‌ها بدون تداخل با رانر: **`/x-وضعیت`**
-- برای توقف دستی قبل از اتمام ۵ ساعت و دریافت گزارش مدت استفاده: **`/x-خاموش`**
-
-#### حالت ۴: بایگانی هوشمند سورس پروژه (`بایگانی`)
+#### حالت ۳: بایگانی هوشمند سورس پروژه (`بایگانی`)
 
 بسته‌بندی فایل‌های اصلی در قالب ZIP، ثبت در بخش Releases با تگ `v4.0`، جلوگیری از نسخه تکراری و اطلاع‌رسانی در تلگرام:
 
@@ -132,7 +114,7 @@ flowchart TD
 بایگانی-@YoshikVPSBOT
 ```
 
-#### حالت ۵: پاک‌سازی سوابق و پوشه‌های لاگ
+#### حالت ۴: پاک‌سازی سوابق و پوشه‌های لاگ
 
 - تخلیه تاریخچه تب Actions: **`اکشنز-پاک`**
 - حذف دو مرحله‌ای پوشه‌های `ping/` و `dns/`: **`پاکسازی`**
@@ -174,7 +156,6 @@ An enterprise-grade, serverless cross-border network telemetry sentinel deployed
 
 - **High-Scale Web & L4 Matrix (`/ping`):** Supports up to 1000+ concurrent targets across TCP, UDP, HTTP/1.1, HTTP/2 ALPN, and HTTP/3 QUIC.
 - **DNS Resolver & Tunneling Sentinel (`/dns`):** Parallel UDP/TCP port 53 validation and tunneling packet reachability checks (inspired by WhiteDNS/CottenDNS), archived in `dns/`.
-- **Dynamic Xray-core Reverse Bridge (`/x-شروع`, `/x-وضعیت`, `/x-خاموش`):** On-demand Xray-core download, interactive `vless://`/`trojan://` (`ws`/`xhttp`) reverse bridge setup, 5-hour runtime with auto-restart watchdog, and zero repo log clutter.
 - **Telegram HTML & Expandable Blockquotes:** Clean collapsible reports with automatic `.txt` document attachment for large outputs.
 - **Smart Release Archiver (`بایگانی`) & History Purger (`اکشنز-پاک`).**
 
