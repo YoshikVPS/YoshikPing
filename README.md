@@ -40,17 +40,17 @@
 flowchart TD
     A["🧑‍💻 شما در ایران<br/>یک کامنت در Issue می‌نویسید"] -->|"GitHub Webhook"| B["⚙️ GitHub Actions<br/>Workflow فعال می‌شود"]
     B --> C["☁️ رانر ابری Microsoft Azure<br/>(خارج از کشور)<br/>Yoshik Ping Engine v4.0"]
-    C --> D1["🔌 موتور /ping (تا ۱۰۰۰ تارگت)<br/>TCP · UDP · H1 · H2 · H3 QUIC"]
-    C --> D2["🛡 موتور /dns (اسکنر ریزالور)<br/>تست UDP/TCP 53 + عبور پکت تانل"]
-    C --> D3["🚇 موتور /x-شروع (Xray Reverse)<br/>تانل ریورس ۵ ساعته + Watchdog"]
-    D1 --> E["🌍 مسیر بین‌المللی<br/>از رانر خارجی ➔ به سمت مرز ایران"]
+    C --> D1["🔌 موتور /ping تا ۱۰۰۰ تارگت<br/>TCP - UDP - H1 - H2 - H3 QUIC"]
+    C --> D2["🛡 موتور /dns اسکنر ریزالور<br/>تست پورت ۵۳ + عبور پکت تانل"]
+    C --> D3["🚇 موتور /x-شروع Xray Reverse<br/>تانل ریورس ۵ ساعته + Watchdog"]
+    D1 --> E["🌍 مسیر بین‌المللی<br/>از رانر خارجی به سمت مرز ایران"]
     D2 --> E
     D3 --> E
-    E --> F["🎯 مقصد شما<br/>سرور / دامنه / ریزالور / پنل"]
+    E --> F["🎯 مقصد شما<br/>سرور - دامنه - ریزالور - پنل"]
     F -->|"پاسخ یا تایم‌اوت"| G["📊 تحلیل و خروجی<br/>UP / DOWN / Tunnel Ready"]
     G --> H1["💬 کامنت همان Issue<br/>با لینک مستقیم و مشخصات"]
     G --> H2["📲 کانال تلگرام<br/>کادر بازشونده + فایل پیوست"]
-    G --> H3["🗂 آرشیو در مخزن<br/>پوشه‌های ping/ و dns/"]
+    G --> H3["🗂 آرشیو در مخزن<br/>پوشه‌های ping و dns"]
     H1 --> I["✅ مدیریت کامل ترافیک مرزی<br/>بدون نیاز به سرور خارجی"]
     H2 --> I
     H3 --> I
@@ -68,119 +68,123 @@ flowchart TD
     style H2 fill:#1e40af,stroke:#3b82f6,stroke-width:2px,color:#fff
     style H3 fill:#3730a3,stroke:#818cf8,stroke-width:2px,color:#fff
     style I fill:#14532d,stroke:#4ade80,stroke-width:3px,color:#fff
+```
 
- قابلیت‌های جدید در نسخه ۴.۰
+---
 
-1.  موتور تست ریزالور و تانل DNS (/dns):
-      - تست موازی و ایمن لیست‌های طولانی آی‌پی روی پورت ۵۳ (udp و tcp) با الهام
-        از ساختار WhiteDNS / CottenDNS.
-      - بررسی واقعی بودن ریزالور و تست عبور پکت‌های ساب‌دامین/تانل.
-      - تخمین زمان اتمام اسکن در شروع کار و ذخیره ریزالورهای سالم در پوشه
-        جداگانه dns/ با تاریخ شمسی.
-2.  ارتقای موتور /ping به مقیاس ۱۰۰۰ تارگت:
-      - بهینه‌سازی همزمانی برای تست روان تا ۱۰۰۰ دامنه و آی‌پی همزمان.
-      - استفاده از نقل‌قول بازشونده تلگرام (Expandable Blockquote) برای نمایش
-        تمیز گزارش‌های طولانی و ارسال خودکار فایل .txt در صورت عبور از سقف ۴۰۹۶
-        کاراکتر.
-3.  موتور تانل ریورس Xray-core (/x-شروع، /x-وضعیت، /x-خاموش):
-      - دانلود و نصب داینامیک هر نسخه دلخواه از مخزن رسمی XTLS/Xray-core.
-      - دریافت فرم کانفیگ (vless:// و trojan:// با ترنسپورت ws و xhttp) و تگ در
-        Issue.
-      - اجرای پایدار تا ۵ ساعت همراه با Watchdog خودکار (ری‌استارت فوری در صورت
-        کرش هسته).
-      - نمایش IP رانر، IP سرور مقصد، مشخصات کامل سخت‌افزاری (OS، کرنل، CPU، RAM)
-        و زمان دقیق شروع/پایان به وقت تهران (بدون ذخیره هیچ لاگی در مخزن).
+### <img src="https://raw.githubusercontent.com/YoshikVPS/YoshikPing/main/photo_2026-02-07_07-40-29.jpg" width="22" style="vertical-align: middle;" /> قابلیت‌های جدید در نسخه ۴.۰
 
- دستورات کاربردی در ایشیو (ChatOps v4.0)
+1. **موتور تست ریزالور و تانل DNS (`/dns`):**
+   - تست موازی و ایمن لیست‌های طولانی آی‌پی روی پورت ۵۳ (`udp` و `tcp`) با الهام از ساختار **WhiteDNS / CottenDNS**.
+   - بررسی واقعی بودن ریزالور و تست عبور پکت‌های ساب‌دامین/تانل.
+   - تخمین زمان اتمام اسکن در شروع کار و ذخیره ریزالورهای سالم در پوشه جداگانه `dns/` با تاریخ شمسی.
+2. **ارتقای موتور `/ping` به مقیاس ۱۰۰۰ تارگت:**
+   - بهینه‌سازی همزمانی برای تست روان تا ۱۰۰۰ دامنه و آی‌پی همزمان.
+   - استفاده از **نقل‌قول بازشونده تلگرام (`Expandable Blockquote`)** برای نمایش تمیز گزارش‌های طولانی و ارسال خودکار فایل `.txt` در صورت عبور از سقف ۴۰۹۶ کاراکتر.
+3. **موتور تانل ریورس Xray-core (`/x-شروع`، `/x-وضعیت`، `/x-خاموش`):**
+   - دانلود و نصب داینامیک هر نسخه دلخواه از مخزن رسمی `XTLS/Xray-core`.
+   - دریافت فرم کانفیگ (`vless://` و `trojan://` با ترنسپورت `ws` و `xhttp`) و تگ در Issue.
+   - اجرای پایدار تا **۵ ساعت** همراه با **Watchdog خودکار** (ری‌استارت فوری در صورت کرش هسته).
+   - نمایش IP رانر، IP سرور مقصد، مشخصات کامل سخت‌افزاری (OS، کرنل، CPU، RAM) و زمان دقیق شروع/پایان به وقت تهران (بدون ذخیره هیچ لاگی در مخزن).
 
-تمامی دستورات در بخش کامنت‌های Issue مخزن ثبت می‌شوند:
+---
 
-حالت ۱: پایش عمیق لایه ۴ و ۷ شبکه (/ping)
+### <img src="https://raw.githubusercontent.com/YoshikVPS/YoshikPing/main/photo_2026-02-07_07-40-29.jpg" width="22" style="vertical-align: middle;" /> دستورات کاربردی در ایشیو (ChatOps v4.0)
 
-پایش همزمان تا ۱۰۰۰ تارگت، نمایش IP رانر، ذخیره در ping/ و ارسال گزارش فشرده به
-کانال تلگرام:
+تمامی دستورات در بخش کامنت‌های **Issue** مخزن ثبت می‌شوند:
 
+#### حالت ۱: پایش عمیق لایه ۴ و ۷ شبکه (`/ping`)
+
+پایش همزمان تا ۱۰۰۰ تارگت، نمایش IP رانر، ذخیره در `ping/` و ارسال گزارش فشرده به کانال تلگرام:
+
+```text
 /ping arvancloud.ir:443(https) cloudflare.com:443(https:h3,udp) 1.1.1.1:53(udp) (تایم)-1 @YoshikVPSBOT
+```
 
-(برای خروجی خالص IPهای سالم، فلگ -txt را اضافه کنید: (تایم)-1-txt).
+*(برای خروجی خالص IPهای سالم، فلگ `-txt` را اضافه کنید: `(تایم)-1-txt`)*.
 
-حالت ۲: اسکن ریزالور و تانل DNS (/dns)
+#### حالت ۲: اسکن ریزالور و تانل DNS (`/dns`)
 
-تست موازی لیست ریزالورها روی پورت ۵۳ (udp، tcp یا هر دو) و ذخیره سالم‌ها در پوشه
-dns/:
+تست موازی لیست ریزالورها روی پورت ۵۳ (`udp`، `tcp` یا هر دو) و ذخیره سالم‌ها در پوشه `dns/`:
 
+```text
 /dns 1.1.1.1:53(udp,tcp) 8.8.8.8:53(udp) -txt @YoshikVPSBOT
+```
 
-(اگر @YoshikVPSBOT را نگذارید، اسکن انجام و در مخزن ذخیره می‌شود اما در کانال
-منتشر نمی‌شود).
+*(اگر `@YoshikVPSBOT` را نگذارید، اسکن انجام و در مخزن ذخیره می‌شود اما در کانال منتشر نمی‌شود).*
 
-حالت ۳: راه‌اندازی تانل ریورس Xray-core (/x-شروع)
+#### حالت ۳: راه‌اندازی تانل ریورس Xray-core (`/x-شروع`)
 
 نصب نسخه دلخواه Xray-core، دریافت کانفیگ ریورس در Issue و اجرا تا ۵ ساعت:
 
+```text
 /x-شروع https://github.com/XTLS/Xray-core/releases/download/v26.10.31/Xray-linux-64.zip
+```
 
-  - برای مشاهده وضعیت لحظه‌ای، زمان باقی‌مانده و تعداد ری‌استارت‌ها بدون تداخل
-    با رانر: /x-وضعیت
-  - برای توقف دستی قبل از اتمام ۵ ساعت و دریافت گزارش مدت استفاده: /x-خاموش
+- برای مشاهده وضعیت لحظه‌ای، زمان باقی‌مانده و تعداد ری‌استارت‌ها بدون تداخل با رانر: **`/x-وضعیت`**
+- برای توقف دستی قبل از اتمام ۵ ساعت و دریافت گزارش مدت استفاده: **`/x-خاموش`**
 
-حالت ۴: بایگانی هوشمند سورس پروژه (بایگانی)
+#### حالت ۴: بایگانی هوشمند سورس پروژه (`بایگانی`)
 
-بسته‌بندی فایل‌های اصلی در قالب ZIP، ثبت در بخش Releases با تگ v4.0، جلوگیری از
-نسخه تکراری و اطلاع‌رسانی در تلگرام:
+بسته‌بندی فایل‌های اصلی در قالب ZIP، ثبت در بخش Releases با تگ `v4.0`، جلوگیری از نسخه تکراری و اطلاع‌رسانی در تلگرام:
 
+```text
 بایگانی-@YoshikVPSBOT
+```
 
-حالت ۵: پاک‌سازی سوابق و پوشه‌های لاگ
+#### حالت ۵: پاک‌سازی سوابق و پوشه‌های لاگ
 
-  - تخلیه تاریخچه تب Actions: اکشنز-پاک
-  - حذف دو مرحله‌ای پوشه‌های ping/ و dns/: پاکسازی
+- تخلیه تاریخچه تب Actions: **`اکشنز-پاک`**
+- حذف دو مرحله‌ای پوشه‌های `ping/` و `dns/`: **`پاکسازی`**
 
- ماتریس فنی تحلیل پروتکل‌ها و سوکت‌ها
+---
 
-| پروتکل         | لایه شبکه | شیوه راستی‌آزمایی سوکت                                       | وضعیت سالم (UP)                                 | ماهیت خطا و مسدودی (DOWN)                 |
-| :------------: | :-------: | :----------------------------------------------------------- | :---------------------------------------------- | :---------------------------------------- |
-| **`TCP`**      | لایه ۴    | هندشیک کامل سیستم‌عامل (`SYN ➔ SYN/ACK ➔ ACK`)               | برقراری سوکت زیر ۲.۸ ثانیه                      | بسته بودن پورت / دراپ پکت در فایروال مرزی |
+### <img src="https://raw.githubusercontent.com/YoshikVPS/YoshikPing/main/photo_2026-02-07_07-40-29.jpg" width="22" style="vertical-align: middle;" /> ماتریس فنی تحلیل پروتکل‌ها و سوکت‌ها
+
+| پروتکل         | لایه شبکه | شیوه راستی‌آزمایی سوکت                                       | وضعیت سالم (UP)                                | ماهیت خطا و مسدودی (DOWN)                 |
+| :------------: | :-------: | :----------------------------------------------------------- | :--------------------------------------------- | :---------------------------------------- |
+| **`TCP`**      | لایه ۴    | هندشیک کامل سیستم‌عامل (`SYN ➔ SYN/ACK ➔ ACK`)               | برقراری سوکت زیر ۲.۸ ثانیه                     | بسته بودن پورت / دراپ پکت در فایروال مرزی |
 | **`UDP`**      | لایه ۴    | ارسال پکت تعاملی دیتگرام و تحلیل پاسخ / عدم دریافت خطای پورت | دریافت دیتاگرام بازگشتی یا عدم وجود Unreachable | تایم‌اوت سوکت / مسدودی کامل پروتکل UDP    |
-| **`DNS`**      | لایه ۷/۴  | ارسال کوئری استاندارد + کوئری تصادفی ساب‌دامین تانل          | پاسخ معتبر `RCODE=0` و عبور پکت تانل            | تایم‌اوت / هایجک / مسدودی ساب‌دامین       |
-| **`HTTP/1.1`** | لایه ۷    | درخواست وب استاندارد با متد GET به همراه هدر                 | دریافت پاسخ معتبر با کدهای استاندارد            | دراپ اتصال در لبه / خطای سرور             |
-| **`HTTP/2`**   | لایه ۷    | هندشیک TLS 1.3 به همراه مذاکره ALPN پروتکل `h2`              | موفقیت مذاکره مالتی‌پلکسینگ                     | عدم پشتیبانی از H2 / فیلتر هندشیک امن     |
-| **`HTTP/3`**   | لایه ۷    | ارسال پکت اولیه QUIC Initial بر بستر UDP دیتگرام             | دریافت ریسپانس معتبر پروتکل QUIC                | دراپ ترافیک QUIC در فایروال لبه مرزی      |
+| **`DNS`**      | لایه ۷/۴  | ارسال کوئری استاندارد + کوئری تصادفی ساب‌دامین تانل          | پاسخ معتبر `RCODE=0` و عبور پکت تانل           | تایم‌اوت / هایجک / مسدودی ساب‌دامین       |
+| **`HTTP/1.1`** | لایه ۷    | درخواست وب استاندارد با متد GET به همراه هدر                 | دریافت پاسخ معتبر با کدهای استاندارد           | دراپ اتصال در لبه / خطای سرور             |
+| **`HTTP/2`**   | لایه ۷    | هندشیک TLS 1.3 به همراه مذاکره ALPN پروتکل `h2`              | موفقیت مذاکره مالتی‌پلکسینگ                    | عدم پشتیبانی از H2 / فیلتر هندشیک امن     |
+| **`HTTP/3`**   | لایه ۷    | ارسال پکت اولیه QUIC Initial بر بستر UDP دیتگرام             | دریافت ریسپانس معتبر پروتکل QUIC               | دراپ ترافیک QUIC در فایروال لبه مرزی      |
 
- آموزش گام‌به‌گام راه‌اندازی روی مخزن شخصی
+---
 
-1.  Fork کردن مخزن: روی گزینه Fork در بالای صفحه کلیک کنید.
-2.  فعال‌سازی دسترسی‌های ورک‌فلو: در مسیر Settings ➔ Actions ➔ General بخش
-    Workflow permissions گزینه Read and write permissions را انتخاب و Save کنید.
-3.  ثبت متغیرهای محرمانه (Secrets): در مسیر Settings ➔ Secrets and variables ➔
-    Actions موارد زیر را ثبت کنید:
-      - ADMIN_USERNAME: نام کاربری گیت‌هاب شما.
-      - TELEGRAM_BOT_TOKEN: توکن بات تلگرام (اختیاری).
-      - TELEGRAM_CHANNEL_ID: آیدی کانال تلگرام همراه با @ (مثال: @YoshikVPS).
-4.  شروع کار: در تب Issues یک Issue باز کرده و دستورات بالا را ارسال کنید.
+### <img src="https://raw.githubusercontent.com/YoshikVPS/YoshikPing/main/photo_2026-02-07_07-40-29.jpg" width="22" style="vertical-align: middle;" /> آموزش گام‌به‌گام راه‌اندازی روی مخزن شخصی
 
-🇬🇧 English Technical Documentation
+1. **Fork کردن مخزن:** روی گزینه Fork در بالای صفحه کلیک کنید.
+2. **فعال‌سازی دسترسی‌های ورک‌فلو:** در مسیر **Settings ➔ Actions ➔ General** بخش **Workflow permissions** گزینه **Read and write permissions** را انتخاب و **Save** کنید.
+3. **ثبت متغیرهای محرمانه (Secrets):** در مسیر **Settings ➔ Secrets and variables ➔ Actions** موارد زیر را ثبت کنید:
+   - `ADMIN_USERNAME`: نام کاربری گیت‌هاب شما.
+   - `TELEGRAM_BOT_TOKEN`: توکن بات تلگرام (اختیاری).
+   - `TELEGRAM_CHANNEL_ID`: آیدی کانال تلگرام همراه با `@` (مثال: `@YoshikVPS`).
+4. **شروع کار:** در تب **Issues** یک Issue باز کرده و دستورات بالا را ارسال کنید.
 
-An enterprise-grade, serverless cross-border network telemetry sentinel deployed
-on Microsoft Azure runner infrastructure via GitHub Actions ChatOps.
+---
 
-🚀 Key Capabilities in Version 4.0
+<a id="english-docs"></a>
 
-  - High-Scale Web & L4 Matrix (/ping): Supports up to 1000+ concurrent targets
-    across TCP, UDP, HTTP/1.1, HTTP/2 ALPN, and HTTP/3 QUIC.
-  - DNS Resolver & Tunneling Sentinel (/dns): Parallel UDP/TCP port 53
-    validation and tunneling packet reachability checks (inspired by
-    WhiteDNS/CottenDNS), archived in dns/.
-  - Dynamic Xray-core Reverse Bridge (/x-شروع, /x-وضعیت, /x-خاموش): On-demand
-    Xray-core download, interactive vless:///trojan:// (ws/xhttp) reverse bridge
-    setup, 5-hour runtime with auto-restart watchdog, and zero repo log clutter.
-  - Telegram HTML & Expandable Blockquotes: Clean collapsible reports with
-    automatic .txt document attachment for large outputs.
-  - Smart Release Archiver (بایگانی) & History Purger (اکشنز-پاک).
+# 🇬🇧 English Technical Documentation
 
+An enterprise-grade, serverless cross-border network telemetry sentinel deployed on Microsoft Azure runner infrastructure via GitHub Actions ChatOps.
+
+## 🚀 Key Capabilities in Version 4.0
+
+- **High-Scale Web & L4 Matrix (`/ping`):** Supports up to 1000+ concurrent targets across TCP, UDP, HTTP/1.1, HTTP/2 ALPN, and HTTP/3 QUIC.
+- **DNS Resolver & Tunneling Sentinel (`/dns`):** Parallel UDP/TCP port 53 validation and tunneling packet reachability checks (inspired by WhiteDNS/CottenDNS), archived in `dns/`.
+- **Dynamic Xray-core Reverse Bridge (`/x-شروع`, `/x-وضعیت`, `/x-خاموش`):** On-demand Xray-core download, interactive `vless://`/`trojan://` (`ws`/`xhttp`) reverse bridge setup, 5-hour runtime with auto-restart watchdog, and zero repo log clutter.
+- **Telegram HTML & Expandable Blockquotes:** Clean collapsible reports with automatic `.txt` document attachment for large outputs.
+- **Smart Release Archiver (`بایگانی`) & History Purger (`اکشنز-پاک`).**
+
+---
+
+```text
 ================================================================================
            📡 YOSHIK VPS NETWORK ENGINEERING & CLOUD TELEMETRY LAB
 ================================================================================
+```
 
 | 👨‍💻 System Architect                          | 🌐 Organization             | 🛡 Core License      | ⚡️ Engine Status       |
 | :-------------------------------------------: | :------------------------: | :-----------------: | :--------------------: |
